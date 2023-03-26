@@ -4,7 +4,7 @@ on:
     tags:
       - "v*.*.*"
 jobs:
-  build:
+  build-test:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
@@ -14,5 +14,17 @@ jobs:
           pypi_token: ${{ secrets.TEST_PYPI_TOKEN }}
           repository_name: "fastapi-keycloak-middleware"
           repository_url: "https://test.pypi.org/legacy/"
+          python_version: "3.10.3"
+          poetry_version: "==1.3.1"
+  release:
+    runs-on: ubuntu-22.04
+    environment: production
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build and publish to pypi
+        uses: JRubics/poetry-publish@v1.16
+        with:
+          pypi_token: ${{ secrets.PYPI_TOKEN }}
+          repository_name: "fastapi-keycloak-middleware"
           python_version: "3.10.3"
           poetry_version: "==1.3.1"
