@@ -1,33 +1,20 @@
-name: Lint
+name: Lint code
 
 on: [push, pull_request]
 
+permissions:
+  contents: read
+
 jobs:
   lint:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+
     steps:
-      - name: Set up python
-        id: setup-python
+      - uses: actions/checkout@v3
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: 1.3.1
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-      - name: Checkout Code
-        uses: actions/checkout@v3
-      #- name: Install dependencies
-      #  run: poetry install --no-interaction
-      - uses: ricardochaves/python-lint@v1.4.0
-        continue-on-error: true
-        with:
-          python-root-list: "fastapi_keycloak_middleware"
-          use-pylint: true
-          use-pycodestyle: false
-          use-flake8: false
-          use-black: true
-          use-mypy: false
-          use-isort: true
+      - name: Run pre-commit
+        uses: pre-commit/action@v3.0.0

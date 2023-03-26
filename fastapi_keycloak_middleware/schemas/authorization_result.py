@@ -1,7 +1,8 @@
 """
 This module contains the schema holding an authorization result
 
-It is used 
+It is used by the FastAPI dependency to return the result of the authorization
+for further processing by the API endpoint
 """
 
 import typing

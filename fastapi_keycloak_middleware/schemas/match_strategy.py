@@ -1,5 +1,5 @@
 """
-This module contains an Enum specifying the match strategy used 
+This module contains an Enum specifying the match strategy used
 by the require_permission decorator
 """
 

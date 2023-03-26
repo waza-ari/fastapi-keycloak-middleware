@@ -4,7 +4,9 @@ This module contains the schema to configure Keycloak.
 
 from pydantic import BaseModel, Field
 
-from fastapi_keycloak_middleware.schemas.authorization_methods import AuthorizationMethod
+from fastapi_keycloak_middleware.schemas.authorization_methods import (
+    AuthorizationMethod,
+)
 
 
 class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-methods

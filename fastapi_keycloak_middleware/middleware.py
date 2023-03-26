@@ -25,7 +25,7 @@ from fastapi_keycloak_middleware.schemas.keycloak_configuration import (
 log = logging.getLogger(__name__)
 
 
-class KeycloakMiddleware:
+class KeycloakMiddleware:  # pylint: disable=too-few-public-methods
     """
     This class represents the middleware for FastAPI. It will authenticate
     a user based on a token. It currently only supports one backend

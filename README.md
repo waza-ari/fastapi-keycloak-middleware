@@ -1,23 +1,25 @@
+[![Documentation Status](https://readthedocs.org/projects/fastapi-keycloak-middleware/badge/?version=latest)](https://fastapi-keycloak-middleware.readthedocs.io/en/latest/?badge=latest)
+[![License: MIT](https://img.shields.io/badge/License-MIT-brightgreen.svg)](https://opensource.org/licenses/MIT)
+
 # FastAPI Keycloak Middleware
 
 This package provides a middleware for [FastAPI](http://fastapi.tiangolo.com>)  that
-simplifies integrating with 
-[Keycloak](http://http://keycloak.org>) for
+simplifies integrating with [Keycloak](http://http://keycloak.org>) for
 authentication and authorization. It supports OIDC and supports validating access 
-tokens, reading roles and basic authentication. In addition it provides several 
+tokens, reading roles and basic authentication. In addition it provides several
 decorators and dependencies to easily integrate into your FastAPI application.
 
 It relies on the [python-keycloak](http://python-keycloak.readthedocs.io) package, 
-which is the only dependency outside of the FastAPI ecosystem which would be installed 
+which is the only dependency outside of the FastAPI ecosystem which would be installed
 anyway. Shoutout to the author of [fastapi-auth-middleware](https://github.com/code-specialist/fastapi-auth-middleware>)
 which served as inspiration for this package and some of its code.
 
-In the future, I plan to add support for fine grained authorization using Keycloak 
+In the future, I plan to add support for fine grained authorization using Keycloak
 Authorization services.
 
 ## Motivation
 
-Using FastAPI and Keycloak quite a lot, and keeping to repeat myself quite a lot when 
+Using FastAPI and Keycloak quite a lot, and keeping to repeat myself quite a lot when
 it comes to authentiating users, I decided to create this library to help with this.
 
 There is a clear separation between the authentication and authorization:
@@ -67,4 +69,3 @@ into Keycloak. Thanks for writing and providing this great piece of software!
 
 This project is using [Act](https://github.com/nektos/act) to handle local development tasks. It is used
 to work locally and also to test Github actions before deploying them.
-
