@@ -20,4 +20,4 @@ repos:
     rev: v2.31.1
     hooks:
       - id: pyupgrade
-        args: [--py37-plus]
+        args: [--py37-plus, --keep-percent-format]

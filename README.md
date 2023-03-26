@@ -3,13 +3,15 @@
 
 # FastAPI Keycloak Middleware
 
+**Full documentation** is [available at Read The Docs](https://fastapi-keycloak-middleware.readthedocs.io/en/latest/)
+
 This package provides a middleware for [FastAPI](http://fastapi.tiangolo.com>)  that
 simplifies integrating with [Keycloak](http://http://keycloak.org>) for
-authentication and authorization. It supports OIDC and supports validating access 
+authentication and authorization. It supports OIDC and supports validating access
 tokens, reading roles and basic authentication. In addition it provides several
 decorators and dependencies to easily integrate into your FastAPI application.
 
-It relies on the [python-keycloak](http://python-keycloak.readthedocs.io) package, 
+It relies on the [python-keycloak](http://python-keycloak.readthedocs.io) package,
 which is the only dependency outside of the FastAPI ecosystem which would be installed
 anyway. Shoutout to the author of [fastapi-auth-middleware](https://github.com/code-specialist/fastapi-auth-middleware>)
 which served as inspiration for this package and some of its code.
