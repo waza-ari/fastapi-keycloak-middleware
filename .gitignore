@@ -1,0 +1,12 @@
+.idea
+.vscode
+mksp_backend/config.py
+dev/misc/
+files/
+__pycache__
+.pytest_cache
+.coverage
+mksp_backend/test.py
+.venv
+.DS_Store
+docs/_build

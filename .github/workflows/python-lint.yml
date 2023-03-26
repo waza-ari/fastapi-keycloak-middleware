@@ -1,0 +1,18 @@
+name: Lint
+
+on: [push, pull_request]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: psf/black@stable
+      - uses: ricardochaves/python-lint@v1.4.0
+        with:
+          use-pylint: true
+          use-pycodestyle: false
+          use-flake8: false
+          use-black: true
+          use-mypy: false
+          use-isort: true

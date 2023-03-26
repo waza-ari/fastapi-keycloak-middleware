@@ -1,0 +1,8 @@
+{
+    "name": "Python Linting",
+    "description": "Workflow that triggers basic linting tasks for commits in the development branch",
+    "iconName": "demo-icon",
+    "categories": [
+        "Python"
+    ]
+}
