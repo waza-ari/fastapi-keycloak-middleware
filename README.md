@@ -1,5 +1,10 @@
 [![Documentation Status](https://readthedocs.org/projects/fastapi-keycloak-middleware/badge/?version=latest)](https://fastapi-keycloak-middleware.readthedocs.io/en/latest/?badge=latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-brightgreen.svg)](https://opensource.org/licenses/MIT)
+![GitHub issues](https://img.shields.io/github/issues/waza-ari/fastapi-keycloak-middleware)
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/waza-ari/fastapi-keycloak-middleware)
+![GitHub top language](https://img.shields.io/github/languages/top/waza-ari/fastapi-keycloak-middleware)
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/waza-ari/fastapi-keycloak-middleware/development.svg)](https://results.pre-commit.ci/latest/github/waza-ari/fastapi-keycloak-middleware/development)
+
 
 # FastAPI Keycloak Middleware
 
