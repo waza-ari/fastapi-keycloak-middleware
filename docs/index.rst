@@ -28,7 +28,7 @@ services.
    usage
    authorization
    advanced_topics
-   autoapi/index
+   api
 
 
 Indices and tables

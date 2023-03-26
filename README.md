@@ -62,3 +62,9 @@ The package helps with:
 This package is heavily inspired by [fastapi-auth-middleware](https://github.com/code-specialist/fastapi-auth-middleware)
 which provides some of the same functionality but without the direct integration
 into Keycloak. Thanks for writing and providing this great piece of software!
+
+## Development
+
+This project is using [Act](https://github.com/nektos/act) to handle local development tasks. It is used
+to work locally and also to test Github actions before deploying them.
+

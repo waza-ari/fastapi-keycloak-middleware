@@ -1,3 +1,16 @@
+import sys
+import os
+
+# If extensions (or modules to document with autodoc) are in another directory,
+# add these directories to sys.path here. If the directory is relative to the
+# documentation root, use os.path.abspath to make it absolute, like shown here.
+# sys.path.insert(0, os.path.abspath('.'))
+
+# Insert Requests' path into the system.
+sys.path.insert(0, os.path.abspath(".."))
+
+import fastapi_keycloak_middleware
+
 # Configuration file for the Sphinx documentation builder.
 #
 # For the full list of built-in configuration values, see the documentation:
@@ -14,19 +27,7 @@ release = "0.1.0"
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = ["autoapi.extension"]
-
-autoapi_type = "python"
-autoapi_dirs = ["../fastapi_keycloak_middleware"]
-autoapi_ignore = ["*migrations*", "__init__.py"]
-autoapi_options = [
-    "members",
-    "undoc-members",
-    "show-inheritance",
-    "show-module-summary",
-    "imported-members",
-]
-autodoc_typehints = "signature"
+extensions = ["sphinx.ext.autodoc"]
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]

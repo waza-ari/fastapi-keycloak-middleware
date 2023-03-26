@@ -27,7 +27,27 @@ log = logging.getLogger(__name__)
 
 class KeycloakMiddleware:
     """
-    Middleware for FastAPI that authenticates a user using a Keycloak access token.
+    This class represents the middleware for FastAPI. It will authenticate
+    a user based on a token. It currently only supports one backend
+    (Keycloak backend).
+
+    The middleware will add the user object to the request object. It
+    optionally can also compile a list of scopes and add it to the request
+    object as well, which can later be used for authoirzation.
+
+    :param app: The FastAPI app instance, is automatically passed by FastAPI
+    :type app: FastAPI
+    :param keycloak_configuration: KeyCloak configuration object. For potential
+        options, see the KeycloakConfiguration schema.
+    :type keycloak_configuration: KeycloakConfiguration
+    :param user_mapper: Custom async function that gets the userinfo extracted from AT
+        and should return a representation of the user that is meaningful to you,
+        the user of this library, defaults to None
+    :type user_mapper:
+        typing.Callable[ [typing.Dict[str, typing.Any]], typing.Awaitable[typing.Any] ], optional
+    :param scope_mapper: Custom async function that transforms the claim values extracted
+        from the token to permissions meaningful for your application, defaults to None
+    :type scope_mapper: typing.Callable[[typing.List[str]], typing.List[str]], optional
     """
 
     def __init__(
@@ -39,9 +59,7 @@ class KeycloakMiddleware:
         ] = None,
         scope_mapper: typing.Callable[[typing.List[str]], typing.List[str]] = None,
     ):
-        """
-        Middleware for FastAPI that authenticates a user using a JWT token.
-        """
+        """Middleware constructor"""
         log.info("Initializing Keycloak Middleware")
         self.app = app
         self.backend: KeycloakBackend = KeycloakBackend(
@@ -84,19 +102,19 @@ class KeycloakMiddleware:
             await self.app(scope, receive, send)  # Token is valid
 
         except AuthHeaderMissing:  # Request has no 'Authorization' HTTP Header
-            response = self.auth_header_missing()
+            response = self._auth_header_missing()
             log.warning("Request is missing an 'Authorization' HTTP header")
             await response(scope, receive, send)
             return
 
         except AuthTokenExpired:  # Token has expired
-            response = self.token_has_expired()
+            response = self._token_has_expired()
             log.warning("Provided token has expired")
             await response(scope, receive, send)
             return
 
         except AuthUserError:
-            response = self.user_not_found()
+            response = self._user_not_found()
             log.warning("Could not find a user based on the provided token")
             await response(scope, receive, send)
             return
@@ -108,7 +126,7 @@ class KeycloakMiddleware:
             return
 
     @staticmethod
-    def auth_header_missing(*args, **kwargs):  # pylint: disable=unused-argument
+    def _auth_header_missing(*args, **kwargs):  # pylint: disable=unused-argument
         """
         Returns a response notifying the user that the request
         is missing an 'Authorization' HTTP header.
@@ -118,14 +136,14 @@ class KeycloakMiddleware:
         )
 
     @staticmethod
-    def token_has_expired(*args, **kwargs):  # pylint: disable=unused-argument
+    def _token_has_expired(*args, **kwargs):  # pylint: disable=unused-argument
         """
         Returns a response notifying the user that the token has expired.
         """
         return PlainTextResponse("Your 'Authorization' HTTP header is invalid", status_code=401)
 
     @staticmethod
-    def user_not_found(*args, **kwargs):  # pylint: disable=unused-argument
+    def _user_not_found(*args, **kwargs):  # pylint: disable=unused-argument
         """
         Returns a response notifying the user that the user was not found.
         """
