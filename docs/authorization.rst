@@ -169,7 +169,7 @@ Accessing the Authorization Result
 You can access the result of the authorization evaluation by using a dependency provided:
 
 .. code-block:: python
-    :emphasize-lines: 1,4
+    :emphasize-lines: 1,5
 
     from fastapi_keycloak_middleware import AuthorizationResult, require_permission, MatchStrategy, get_authorization_result
 
