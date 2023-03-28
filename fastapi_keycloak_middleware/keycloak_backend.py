@@ -73,15 +73,15 @@ class KeycloakBackend(AuthenticationBackend):  # pylint: disable=too-few-public-
 
         # Depending on the chosen method by the user, either
         # use the introspection endpoint or decode the token
+        keycloak_openid = KeycloakOpenID(
+            server_url=self.keycloak_configuration.url,
+            client_id=self.keycloak_configuration.client_id,
+            realm_name=self.keycloak_configuration.realm,
+            client_secret_key=self.keycloak_configuration.client_secret,
+        )
         if self.use_introspection_endpoint:
             log.debug("Using introspection endpoint to validate token")
             # Call introspect endpoint to check if token is valid
-            keycloak_openid = KeycloakOpenID(
-                server_url=self.keycloak_configuration.url,
-                client_id=self.keycloak_configuration.client_id,
-                realm_name=self.keycloak_configuration.realm,
-                client_secret_key=self.keycloak_configuration.client_secret,
-            )
             try:
                 token_info = keycloak_openid.introspect(token[1])
             except keycloak.exceptions.KeycloakPostError as exc:
