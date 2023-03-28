@@ -50,3 +50,8 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
         title="Authorization Claim",
         description="The claim to use for authorization.",
     )
+    use_introspection_endpoint: bool = Field(
+        False,
+        title="Use Introspection Endpoint",
+        description="Whether to use the introspection endpoint.",
+    )

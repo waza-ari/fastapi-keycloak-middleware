@@ -37,6 +37,27 @@ This module implements these best practices.
 .. warning::
     Especially during the authorization phase, the user object is included in the log message. Make sure your user object is serializable to a string, otherwise the log message will contain non-helpful strings.
 
+Token Introspection vs Opaque Tokens
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+By default, this library will attempt to validate the JWT signature locally using the public key obtained from Keycloak. This is the recommended way to validate the token, as it does not require any additional requests to Keycloak. Also, Keycloak does not support opaque tokens yet.
+
+If you want to still use the token endpoint to validate the token, you can opt to do so:
+
+.. code-block:: python
+   :emphasize-lines: 7
+
+    # Set up Keycloak
+    keycloak_config = KeycloakConfiguration(
+        url="https://sso.your-keycloak.com/auth/",
+        realm="<Realm Name>",
+        client_id="<Client ID>",
+        client_secret="<Client Secret>",
+        use_introspection_endpoint=True
+    )
+
+Please make sure to understand the consequences before applying this configuration.
+
 Device Authentication
 ^^^^^^^^^^^^^^^^^^^^^
 

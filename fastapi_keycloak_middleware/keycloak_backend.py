@@ -39,10 +39,8 @@ class KeycloakBackend(AuthenticationBackend):  # pylint: disable=too-few-public-
         self,
         keycloak_configuration: KeycloakConfiguration,
         user_mapper: typing.Callable[[typing.Dict[str, typing.Any]], typing.Awaitable[typing.Any]],
-        use_introspection_endpoint: bool = True,
     ):
         self.keycloak_configuration = keycloak_configuration
-        self.use_introspection_endpoint = use_introspection_endpoint
         self.get_user = user_mapper if user_mapper else self._get_user
 
     async def _get_user(self, userinfo: typing.Dict[str, typing.Any]) -> BaseUser:
@@ -79,7 +77,7 @@ class KeycloakBackend(AuthenticationBackend):  # pylint: disable=too-few-public-
             realm_name=self.keycloak_configuration.realm,
             client_secret_key=self.keycloak_configuration.client_secret,
         )
-        if self.use_introspection_endpoint:
+        if self.keycloak_configuration.use_introspection_endpoint:
             log.debug("Using introspection endpoint to validate token")
             # Call introspect endpoint to check if token is valid
             try:
