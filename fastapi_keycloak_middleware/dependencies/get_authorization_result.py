@@ -3,6 +3,7 @@ This module contains a Dependency that results the authorization result
 """
 
 from typing import Optional
+
 from fastapi_keycloak_middleware.schemas.authorization_result import AuthorizationResult
 
 
