@@ -29,7 +29,7 @@ log = logging.getLogger(__name__)
 
 def require_permission(
     permissions: typing.Union[str, typing.List[str]],
-    match_strategy: str = MatchStrategy.AND,
+    match_strategy: MatchStrategy = MatchStrategy.AND,
 ) -> Callable:
     """
     Decorator to check if a user has a specific permission.
@@ -54,7 +54,7 @@ def require_permission(
             permission for permission in requested_permission if permission in allowed_scopes
         ]
 
-        if match_strategy == "and":
+        if match_strategy == MatchStrategy.AND:
             return set(requested_permission) == set(matching_permissions), matching_permissions
         return len(matching_permissions) > 0, matching_permissions
 
