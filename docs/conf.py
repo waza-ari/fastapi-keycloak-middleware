@@ -22,7 +22,7 @@ import fastapi_keycloak_middleware
 project = "FastAPI Keycloak Middleware"
 copyright = "2023, Daniel Herrmann"
 author = "Daniel Herrmann"
-release = "0.1.1"
+release = "0.2.0"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
