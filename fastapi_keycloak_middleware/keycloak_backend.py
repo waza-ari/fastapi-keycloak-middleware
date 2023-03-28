@@ -43,6 +43,20 @@ class KeycloakBackend(AuthenticationBackend):  # pylint: disable=too-few-public-
         self.keycloak_configuration = keycloak_configuration
         self.get_user = user_mapper if user_mapper else self._get_user
 
+        # Fetch KC public key if needed
+        if not keycloak_configuration.use_introspection_endpoint:
+            keycloak_openid = KeycloakOpenID(
+                server_url=keycloak_configuration.url,
+                client_id=keycloak_configuration.client_id,
+                realm_name=keycloak_configuration.realm,
+                client_secret_key=keycloak_configuration.client_secret,
+            )
+            self.keycloak_public_key = (
+                "-----BEGIN PUBLIC KEY-----\n"
+                + keycloak_openid.public_key()
+                + "\n-----END PUBLIC KEY-----"
+            )
+
     async def _get_user(self, userinfo: typing.Dict[str, typing.Any]) -> BaseUser:
         """
         Default implementation of the get_user method.
@@ -87,13 +101,10 @@ class KeycloakBackend(AuthenticationBackend):  # pylint: disable=too-few-public-
         else:
             log.debug("Using keycloak public key to validate token")
             # Decode Token locally using the public key
-            kc_public_key = (
-                "-----BEGIN PUBLIC KEY-----\n"
-                + keycloak_openid.public_key()
-                + "\n-----END PUBLIC KEY-----"
-            )
             options = {"verify_signature": True, "verify_aud": True, "verify_exp": True}
-            token_info = keycloak_openid.decode_token(token[1], key=kc_public_key, options=options)
+            token_info = keycloak_openid.decode_token(
+                token[1], key=self.keycloak_public_key, options=options
+            )
 
         # Extract claims from token
         user_info = {}
