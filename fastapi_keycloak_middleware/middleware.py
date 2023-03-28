@@ -5,6 +5,7 @@ It is inspired by the fastapi-auth-middleware package published
 here: https://github.com/code-specialist/fastapi-auth-middleware
 """
 import logging
+import re
 import typing
 
 from fastapi import FastAPI
@@ -40,6 +41,10 @@ class KeycloakMiddleware:  # pylint: disable=too-few-public-methods
     :param keycloak_configuration: KeyCloak configuration object. For potential
         options, see the KeycloakConfiguration schema.
     :type keycloak_configuration: KeycloakConfiguration
+    :param exclude_paths: List of paths that should be excluded from authentication.
+        Defaults to an empty list. The strings will be compiled to regular expressions and used
+        to match the path. If the path matches, the middleware will skip authentication.
+    :type exclude_paths: typing.List[str], optional
     :param user_mapper: Custom async function that gets the userinfo extracted from AT
         and should return a representation of the user that is meaningful to you,
         the user of this library, defaults to None
@@ -54,6 +59,7 @@ class KeycloakMiddleware:  # pylint: disable=too-few-public-methods
         self,
         app: FastAPI,
         keycloak_configuration: KeycloakConfiguration,
+        exclude_patterns: typing.List[str] = None,
         user_mapper: typing.Callable[
             [typing.Dict[str, typing.Any]], typing.Awaitable[typing.Any]
         ] = None,
@@ -69,6 +75,29 @@ class KeycloakMiddleware:  # pylint: disable=too-few-public-methods
         self.scope_mapper = scope_mapper
         log.debug("Keycloak Middleware initialized")
 
+        # Try to compile patterns
+        self.exclude_paths = []
+        if exclude_patterns and isinstance(exclude_patterns, list):
+            for path in exclude_patterns:
+                try:
+                    self.exclude_paths.append(re.compile(path))
+                except re.error:
+                    log.error("Could not compile regex for exclude pattern %s", path)
+
+    async def _exclude_path(self, path: str) -> bool:
+        """
+        Checks if a path should be excluded from authentication
+
+        :param path: The path to check
+        :type path: str
+        :return: True if the path should be excluded, False otherwise
+        :rtype: bool
+        """
+        for pattern in self.exclude_paths:
+            if pattern.match(path):
+                return True
+        return False
+
     async def __call__(self, scope: Scope, receive: Receive, send: Send):
         log.debug("Keycloak Middleware is handling request")
 
@@ -78,6 +107,13 @@ class KeycloakMiddleware:  # pylint: disable=too-few-public-methods
         ]:  # pragma nocover # Filter for relevant requests
             log.debug("Skipping non-HTTP request")
             await self.app(scope, receive, send)  # pragma nocover # Bypass
+            return
+
+        # Extract path from scope
+        path = scope["path"]
+        if await self._exclude_path(path):
+            log.debug("Skipping authentication for excluded path %s", path)
+            await self.app(scope, receive, send)
             return
 
         connection = HTTPConnection(scope)  # Scoped connection
