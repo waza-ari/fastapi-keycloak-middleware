@@ -15,6 +15,7 @@ from starlette.types import Receive, Scope, Send
 
 from fastapi_keycloak_middleware.exceptions import (
     AuthHeaderMissing,
+    AuthInvalidToken,
     AuthTokenExpired,
     AuthUserError,
 )
@@ -155,6 +156,11 @@ class KeycloakMiddleware:  # pylint: disable=too-few-public-methods
             await response(scope, receive, send)
             return
 
+        except AuthInvalidToken:
+            response = self._invalid_token()
+            log.warning("Provided access token could not be validated")
+            await response(scope, receive, send)
+            return
         except Exception as exc:  # pylint: disable=broad-except
             response = PlainTextResponse(f"An error occurred: {exc}", status_code=500)
             log.error("An error occurred while authenticating the user")
@@ -183,4 +189,12 @@ class KeycloakMiddleware:  # pylint: disable=too-few-public-methods
         """
         Returns a response notifying the user that the user was not found.
         """
-        return PlainTextResponse("Could not find a user based on this token", status_code=401)
+
+    @staticmethod
+    def _invalid_token(*args, **kwargs):  # pylint: disable=unused-argument
+        """
+        Returns a response notifying the user that the acess token is invalid.
+        """
+        return PlainTextResponse(
+            "Unable to verify provided access token", status_code=401
+        )

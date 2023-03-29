@@ -8,6 +8,8 @@ import typing
 from typing import Tuple
 
 import keycloak
+from jose import ExpiredSignatureError, JWTError
+from jose.exceptions import JWTClaimsError
 from keycloak import KeycloakOpenID
 from starlette.authentication import AuthCredentials, AuthenticationBackend, BaseUser
 from starlette.requests import HTTPConnection
@@ -17,6 +19,7 @@ from fastapi_keycloak_middleware.exceptions import (
     AuthHeaderMissing,
     AuthInvalidToken,
     AuthKeycloakError,
+    AuthTokenExpired,
     AuthUserError,
 )
 from fastapi_keycloak_middleware.fast_api_user import FastApiUser
@@ -101,10 +104,21 @@ class KeycloakBackend(AuthenticationBackend):  # pylint: disable=too-few-public-
         else:
             log.debug("Using keycloak public key to validate token")
             # Decode Token locally using the public key
-            options = {"verify_signature": True, "verify_aud": True, "verify_exp": True}
-            token_info = keycloak_openid.decode_token(
-                token[1], key=self.keycloak_public_key, options=options
-            )
+            options = {
+                "verify_signature": True,
+                "verify_aud": True,
+                "verify_exp": True,
+            }
+            try:
+                token_info = keycloak_openid.decode_token(
+                    token[1], key=self.keycloak_public_key, options=options
+                )
+            except ExpiredSignatureError as exc:
+                raise AuthTokenExpired from exc
+            except JWTClaimsError as exc:
+                raise AuthClaimMissing from exc
+            except JWTError as exc:
+                raise AuthInvalidToken from exc
 
         # Extract claims from token
         user_info = {}
