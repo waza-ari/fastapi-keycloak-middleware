@@ -33,7 +33,7 @@ from fastapi_keycloak_middleware.schemas.keycloak_configuration import (
 log = logging.getLogger(__name__)
 
 
-class KeycloakBackend(AuthenticationBackend):  # pylint: disable=too-few-public-methods
+class KeycloakBackend(AuthenticationBackend):
     """
     Backend to perform authentication using Keycloak
     """
@@ -41,7 +41,9 @@ class KeycloakBackend(AuthenticationBackend):  # pylint: disable=too-few-public-
     def __init__(
         self,
         keycloak_configuration: KeycloakConfiguration,
-        user_mapper: typing.Callable[[typing.Dict[str, typing.Any]], typing.Awaitable[typing.Any]],
+        user_mapper: typing.Callable[
+            [typing.Dict[str, typing.Any]], typing.Awaitable[typing.Any]
+        ],
     ):
         self.keycloak_configuration = keycloak_configuration
         self.get_user = user_mapper if user_mapper else self._get_user
@@ -70,7 +72,9 @@ class KeycloakBackend(AuthenticationBackend):  # pylint: disable=too-few-public-
             user_id=userinfo.get("user_id", ""),
         )
 
-    async def authenticate(self, conn: HTTPConnection) -> Tuple[AuthCredentials, BaseUser]:
+    async def authenticate(
+        self, conn: HTTPConnection
+    ) -> Tuple[AuthCredentials, BaseUser]:
         """
         The authenticate method is invoked each time a route is called that
         the middleware is applied to.
@@ -81,7 +85,10 @@ class KeycloakBackend(AuthenticationBackend):  # pylint: disable=too-few-public-
         # Check if token starts with the authentication scheme
         auth_header = conn.headers["Authorization"]
         token = auth_header.split(" ")
-        if len(token) != 2 or token[0] != self.keycloak_configuration.authentication_scheme:
+        if (
+            len(token) != 2
+            or token[0] != self.keycloak_configuration.authentication_scheme
+        ):
             raise AuthInvalidToken
 
         token_info = None
@@ -130,7 +137,9 @@ class KeycloakBackend(AuthenticationBackend):  # pylint: disable=too-few-public-
                 if self.keycloak_configuration.reject_on_missing_claim:
                     log.warning("Rejecting request because of missing claim")
                     raise AuthClaimMissing from KeyError
-                log.debug("Backend is configured to ignore missing claims, continuing...")
+                log.debug(
+                    "Backend is configured to ignore missing claims, continuing..."
+                )
 
         # Call user function to get user object
         try:
@@ -149,7 +158,10 @@ class KeycloakBackend(AuthenticationBackend):  # pylint: disable=too-few-public-
 
         # Handle Authorization depending on the Claim Method
         scope_auth = []
-        if self.keycloak_configuration.authorization_method == AuthorizationMethod.CLAIM:
+        if (
+            self.keycloak_configuration.authorization_method
+            == AuthorizationMethod.CLAIM
+        ):
             if self.keycloak_configuration.authorization_claim not in token_info:
                 raise AuthClaimMissing
             scope_auth = token_info[self.keycloak_configuration.authorization_claim]

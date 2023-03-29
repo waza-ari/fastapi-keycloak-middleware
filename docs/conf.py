@@ -9,7 +9,7 @@ import os
 # Insert Requests' path into the system.
 sys.path.insert(0, os.path.abspath(".."))
 
-import fastapi_keycloak_middleware
+import fastapi_keycloak_middleware  # noqa: F401,E402
 
 # Configuration file for the Sphinx documentation builder.
 #

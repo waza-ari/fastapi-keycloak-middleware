@@ -41,7 +41,9 @@ def require_permission(
 
     # Check if match_strategy is valid
     if match_strategy not in MatchStrategy:
-        raise ValueError("Invalid match strategy. Must be 'and' or 'or'. Got %s" % match_strategy)
+        raise ValueError(
+            "Invalid match strategy. Must be 'and' or 'or'. Got %s" % match_strategy
+        )
 
     def _check_permission(
         requested_permission: typing.List[str], allowed_scopes: typing.List[str]
@@ -51,11 +53,16 @@ def require_permission(
         """
         # Get matching permissions
         matching_permissions = [
-            permission for permission in requested_permission if permission in allowed_scopes
+            permission
+            for permission in requested_permission
+            if permission in allowed_scopes
         ]
 
         if match_strategy == MatchStrategy.AND:
-            return set(requested_permission) == set(matching_permissions), matching_permissions
+            return (
+                set(requested_permission) == set(matching_permissions),
+                matching_permissions,
+            )
         return len(matching_permissions) > 0, matching_permissions
 
     def decorator(func):
@@ -80,7 +87,9 @@ def require_permission(
             allowed_scopes = request.get("auth", [])
 
             # Check if user has permission
-            allowed, matching_permissions = _check_permission(permissions, allowed_scopes)
+            allowed, matching_permissions = _check_permission(
+                permissions, allowed_scopes
+            )
 
             if allowed:
                 log.info("Permission granted for user %s" % (str(user)))
@@ -117,7 +126,9 @@ def require_permission(
             ),
             *parameters.values(),
         ]
-        new_sig = sig.replace(parameters=parameters, return_annotation=sig.return_annotation)
+        new_sig = sig.replace(
+            parameters=parameters, return_annotation=sig.return_annotation
+        )
         wrapper.__signature__ = new_sig
         return wrapper
 

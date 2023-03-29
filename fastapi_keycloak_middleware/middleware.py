@@ -27,7 +27,7 @@ from fastapi_keycloak_middleware.schemas.keycloak_configuration import (
 log = logging.getLogger(__name__)
 
 
-class KeycloakMiddleware:  # pylint: disable=too-few-public-methods
+class KeycloakMiddleware:
     """
     This class represents the middleware for FastAPI. It will authenticate
     a user based on a token. It currently only supports one backend
@@ -43,16 +43,19 @@ class KeycloakMiddleware:  # pylint: disable=too-few-public-methods
         options, see the KeycloakConfiguration schema.
     :type keycloak_configuration: KeycloakConfiguration
     :param exclude_paths: List of paths that should be excluded from authentication.
-        Defaults to an empty list. The strings will be compiled to regular expressions and used
-        to match the path. If the path matches, the middleware will skip authentication.
+        Defaults to an empty list. The strings will be compiled to regular expressions
+        and used to match the path. If the path matches, the middleware
+        will skip authentication.
     :type exclude_paths: typing.List[str], optional
     :param user_mapper: Custom async function that gets the userinfo extracted from AT
         and should return a representation of the user that is meaningful to you,
         the user of this library, defaults to None
     :type user_mapper:
-        typing.Callable[ [typing.Dict[str, typing.Any]], typing.Awaitable[typing.Any] ], optional
-    :param scope_mapper: Custom async function that transforms the claim values extracted
-        from the token to permissions meaningful for your application, defaults to None
+        typing.Callable[ [typing.Dict[str, typing.Any]], typing.Awaitable[typing.Any] ]
+        optional
+    :param scope_mapper: Custom async function that transforms the claim values
+        extracted from the token to permissions meaningful for your application,
+        defaults to None
     :type scope_mapper: typing.Callable[[typing.List[str]], typing.List[str]], optional
     """
 
@@ -161,8 +164,11 @@ class KeycloakMiddleware:  # pylint: disable=too-few-public-methods
             log.warning("Provided access token could not be validated")
             await response(scope, receive, send)
             return
+
         except Exception as exc:  # pylint: disable=broad-except
-            response = PlainTextResponse(f"An error occurred: {exc}", status_code=500)
+            response = PlainTextResponse(
+                f"An error occurred: {exc.__class__.__name__}", status_code=401
+            )
             log.error("An error occurred while authenticating the user")
             await response(scope, receive, send)
             return
@@ -182,13 +188,18 @@ class KeycloakMiddleware:  # pylint: disable=too-few-public-methods
         """
         Returns a response notifying the user that the token has expired.
         """
-        return PlainTextResponse("Your 'Authorization' HTTP header is invalid", status_code=401)
+        return PlainTextResponse(
+            "Your 'Authorization' HTTP header is invalid", status_code=401
+        )
 
     @staticmethod
     def _user_not_found(*args, **kwargs):  # pylint: disable=unused-argument
         """
         Returns a response notifying the user that the user was not found.
         """
+        return PlainTextResponse(
+            "Could not find a user based on this token", status_code=401
+        )
 
     @staticmethod
     def _invalid_token(*args, **kwargs):  # pylint: disable=unused-argument
