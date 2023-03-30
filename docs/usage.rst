@@ -37,7 +37,7 @@ This is a very basic example on how to add the Middleware to a FastAPI applicati
 This is a minimal example of using the middleware and will already perform the following actions:
 
 * Parse the :code:`Authorization` header for a :code:`Bearer` token (the token scheme can be configured, see below). Return :code:`401` if no token is found.
-* Validate the token against the token instrospection endpoint of Keycloak. Return :code:`401` if the token is invalid or expired.
+* Validate the token using the public key of the realm obtained from Keycloak. Return :code:`401` if the token is invalid or expired.
 * Extract user information from the token. The claims to use are configurable, by default the following claims are read:
    * :code:`sub` - part of the :code:`openid` scope, defining a mandatory, unique, immutable string identifier for the user
    * :code:`name` - part of the :code:`profile` scope, defining a human-readable name for the user
