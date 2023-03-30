@@ -35,7 +35,7 @@ class KeycloakMiddleware:
 
     The middleware will add the user object to the request object. It
     optionally can also compile a list of scopes and add it to the request
-    object as well, which can later be used for authoirzation.
+    object as well, which can later be used for authorization.
 
     :param app: The FastAPI app instance, is automatically passed by FastAPI
     :type app: FastAPI

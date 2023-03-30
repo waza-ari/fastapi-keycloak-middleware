@@ -11,7 +11,38 @@ from fastapi_keycloak_middleware.schemas.authorization_methods import (
 
 class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-methods
     """
-    This class contains the schema to configure Keycloak.
+    This is a Pydantic schema used to pass backend konfiguration
+    for the Keycloak Backend to the middleware.
+
+    :param realm: Keycloak realm that should be used for token authentication.
+    :type realm: str
+    :param url: URL of the Keycloak server. If you use legacy Keycloak versions
+        or still have the auth context, you need to add the auth context to the URL.
+    :type url: str
+    :param client_id: Client ID of the client used to validate the token. The client
+        id is only needed if you use the introspection endpoint.
+    :type client_id: str, optional
+    :param client_secret: Client secret of the client used to validate the token.
+        The client secret is only needed if you use the introspection endpoint.
+    :type client_secret: str, optional
+    :param claims: List of claims that should be extracted from the access token.
+        Defaults to
+        ``["sub", "name", "family_name", "given_name", "preferred_username", "email"]``.
+    :type claims: list[str], optional
+    :param reject_on_missing_claim: Whether to reject the request if a claim is missing.
+        Defaults to ``True``.
+    :type reject_on_missing_claim: bool, optional
+    :param authentication_scheme: Authentication scheme to use. Defaults to ``Bearer``.
+    :type authentication_scheme: str, optional
+    :param authorization_method: Authorization method to use. Defaults to ``NONE``.
+    :type authorization_method: AuthorizationMethod, optional
+    :param authorization_claim: Claim to use for extracting authorization scopes.
+        Defaults to ``roles``.
+    :type authorization_claim: str, optional
+    :param use_introspection_endpoint: Whether to use the introspection endpoint
+        for token validation. Should not be needed for Keycloak in general
+        as Keycloak doesn't support opaque tokens. Defaults to ``False``.
+    :type use_introspection_endpoint: bool, optional
     """
 
     realm: str = Field(..., title="Realm", description="The realm to use.")

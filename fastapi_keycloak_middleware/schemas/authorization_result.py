@@ -17,18 +17,24 @@ from fastapi_keycloak_middleware.schemas.authorization_methods import (
 class AuthorizationResult(BaseModel):  # pylint: disable=too-few-public-methods
     """
     This class contains the schema representing an authorization result.
+
+    The following attributes will be set when returning the class in your
+    path function:
     """
 
+    #: The method that was used to authorize the user
     method: typing.Union[None, AuthorizationMethod] = Field(
         None,
         title="Method",
         description="The method used to authorize the user.",
     )
+    #: Whether the user is authorized or not
     authorized: bool = Field(
         False,
         title="Authorized",
         description="Whether the user is authorized or not.",
     )
+    #: The scopes that matched the user's scopes
     matched_scopes: typing.List[str] = Field(
         [],
         title="Matched Scopes",

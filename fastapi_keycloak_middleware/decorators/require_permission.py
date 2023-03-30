@@ -32,7 +32,16 @@ def require_permission(
     match_strategy: MatchStrategy = MatchStrategy.AND,
 ) -> Callable:
     """
-    Decorator to check if a user has a specific permission.
+    This decorator can be used to enfore certain permissions for the path
+    function it is applied to.
+
+    :param permissions: The permissions that are required to access the path
+        function. Can be a single string or a list of strings.
+    :type permissions: typing.Union[str, typing.List[str]], optional
+    :param match_strategy: The strategy that is used to match the permissions.
+        Defaults to ``MatchStrategy.AND``.
+    :type match_strategy: MatchStrategy, optional
+    :return: The decorated function
     """
 
     # Check if permissions is a single string, convert to list if so

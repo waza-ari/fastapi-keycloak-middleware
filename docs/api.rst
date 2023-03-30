@@ -16,9 +16,10 @@ Middleware
 Support Classes
 ---------------
 
-.. autoclass:: AuthorizationResult
-    :members:
+.. _keycloak_configuration:
 .. autoclass:: KeycloakConfiguration
+    :members:
+.. autoclass:: AuthorizationResult
     :members:
 .. autoclass:: AuthorizationMethod
     :members:

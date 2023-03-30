@@ -53,7 +53,7 @@ This is a minimal example of using the middleware and will already perform the f
 Keycloak Configuration Scheme
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The :code:`KeycloakConfiguration` class is used to configure the Keycloak connection. Refer to the API documentation for a complete list of parameters that are supported.
+The :code:`KeycloakConfiguration` class is used to configure the Keycloak connection. Refer to the :ref:`Classes API documentation<keycloak_configuration>` for a complete list of parameters that are supported.
 
 Change Authentication Scheme
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
