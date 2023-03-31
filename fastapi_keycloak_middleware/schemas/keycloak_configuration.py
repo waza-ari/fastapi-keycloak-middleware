@@ -43,6 +43,16 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
         for token validation. Should not be needed for Keycloak in general
         as Keycloak doesn't support opaque tokens. Defaults to ``False``.
     :type use_introspection_endpoint: bool, optional
+    :param enable_device_authentication: Whether to enable device authentication.
+        If device authentication is enabled, the middleware will ignore required user
+        claims and not attempt to map the user. The token will be validated and then the
+        request forwarded unmodified. Defaults to ``False``.
+    :type enable_device_authentication: bool, optional
+    :param device_authentication_claim: This claim will be used to check if the token
+        is a device token. Defaults to ``is_device``. This is only used if
+        ``enable_device_authentication`` is set to ``True``. The value
+        is extracted from the claim and checked if its a truthy value.
+        To be specific, ``bool(value)`` must evaluate to ``True``.
     """
 
     realm: str = Field(..., title="Realm", description="The realm to use.")
@@ -87,4 +97,18 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
         False,
         title="Use Introspection Endpoint",
         description="Whether to use the introspection endpoint.",
+    )
+    enable_device_authentication: bool = Field(
+        False,
+        title="Enable Device Authentication",
+        description="Whether to enable device authentication. If device authentication"
+        " is enabled, the middleware will ignore required user claims and not attempt"
+        " to map the user. The token will be validated and then the request"
+        " forwarded unmodified.",
+    )
+    device_authentication_claim: str = Field(
+        "is_device",
+        title="Device Authentication Claim",
+        description="The claim that will be checked. If present and if it evaluates to"
+        " true, the device authentication will be applied for the request.",
     )

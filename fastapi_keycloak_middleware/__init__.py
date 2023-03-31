@@ -21,6 +21,7 @@ from fastapi_keycloak_middleware.schemas.keycloak_configuration import (
     KeycloakConfiguration,
 )
 from fastapi_keycloak_middleware.schemas.match_strategy import MatchStrategy
+from fastapi_keycloak_middleware.fast_api_user import FastApiUser
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
@@ -30,6 +31,7 @@ __all__ = [
     KeycloakConfiguration.__name__,
     AuthorizationMethod.__name__,
     MatchStrategy.__name__,
+    FastApiUser.__name__,
     get_user.__name__,
     get_authorization_result.__name__,
     require_permission.__name__,

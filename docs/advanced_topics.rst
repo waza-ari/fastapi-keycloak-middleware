@@ -94,6 +94,9 @@ The middleware provides a configuration option to exclude certain paths from aut
 
 This would make sure you can access the docs, alternate docs, OpenAPI schema and health check endpoint without authentication.
 
+.. warning::
+    At the moment only the paths are checked, not the request method or other criteria. See issue `#3 <https://github.com/waza-ari/fastapi-keycloak-middleware/issues/3>`_ for more details.
+
 **Technical Details:**
 
 Under the hood these paths are compiled to regex and then matched against the request path. Each string is passed as-is to :code:`re.compile` and stored, such that it can be used later to patch against the request path.
@@ -127,7 +130,70 @@ Alternatively you can use multiple :code:`FastAPI` applications and mount them t
 Device Authentication
 ^^^^^^^^^^^^^^^^^^^^^
 
-Documentation will follow soon
+If you need to authenticate devices, you can do so in various different ways. We need to distinguish between two different scenarios:
+
+User Devices
+------------
+
+These are devices that belong to a certain user. You can use Keycloak `device authorization grant <https://www.keycloak.org/docs/latest/securing_apps/#device-authorization-grant>`_. The device can start the process by using the Keycloak REST API and show a code to the user. The user then enters this code in Keycloak and authenticates with the user credentials. The device can poll another endpoint and receives a token when the authentication is completed.
+
+You only need to make sure that the same claims are mapped to tokens created by this client compared to the claims normal users would get. For this library there is no difference between those tokens then, so authentication and authorization work as previously described.
+
+Standalone Devices
+------------------
+
+**Overview**
+
+It gets a little more complicated if a device is not directly mapped to a user, for example IoT decices you maintain that need to access your API.
+
+While the way how you obtain the token doesn't really matter (could be device code flow as described above or could be Keycloak offline tokens), the user that is used for this matters.
+
+**Keycloak configuration**
+
+One example on how to configure the Keycloak side of things:
+
+1. Create a user in Keycloak that represents the device
+2. Create a client for device authentication
+3. Create client roles for the devices you need to support and map them to the same claim you use for user roles on your user client
+4. Map the device user to client roles of the device client
+
+You can now obtain a refresh token on either using the device flow or my leveraging offline sessions and the device can use them to obtain an access token if it needs to perform requests against the API.
+
+.. note::
+    This by no means is the only way to do this. Keycloak is very flexible, you'll need to find the configuration that fits your needs.
+
+**Library configuration**
+
+Depending on your user handling within the API, you may need to take additional steps. If you also create the device users within your API environment and the user mapper can map them as normal, you don't need to take additonal steps. If you don't want to create these users within the API, this library has options to configure how to behave in case the user does not exist.
+
+The default behavior is to fail authentication if the built-in or user-defined user mapper cannot return a user. For device authentication, it is possible to add a specific claim to the access token which tells the library that this is a device requesting access.
+
+The following example shows the configurtion on the library side:
+
+.. code-block:: python
+   :emphasize-lines: 7,8
+
+    # Set up Keycloak
+    keycloak_config = KeycloakConfiguration(
+        url="https://sso.your-keycloak.com/auth/",
+        realm="<Realm Name>",
+        client_id="<Client ID>",
+        client_secret="<Client Secret>",
+        enable_device_authentication=True,
+        device_authentication_claim="is_device",
+    )
+
+This tells the library to enable the aforementioned behavior. It will now:
+
+1. The access token signature and validity will be checked as usual
+2. Check if the claim :code:`is_device` is present in the access token
+3. If it is present, it will evaluate the value of the claim. If it is a truthy value (``bool(value) === True``), continue, otherwise fail authentication
+4. The remaining steps (claim extraction, user mapping, authorization scope mapping) will be skipped
+
+If the claim is not present in the access token, the library will behave as usual and try normal user authentication.
+
+.. note::
+    To add the claim to your token, you can either use a ``Hardcoded claim`` mapper or any other method you prefer.
 
 Request Injection
 ^^^^^^^^^^^^^^^^^

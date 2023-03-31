@@ -127,9 +127,27 @@ class KeycloakBackend(AuthenticationBackend):
             except JWTError as exc:
                 raise AuthInvalidToken from exc
 
+        # Calculate claims to extract
+        # Default is user configured claims
+        claims = self.keycloak_configuration.claims
+        # If device auth is enabled + device claim is present...
+        if (
+            self.keycloak_configuration.enable_device_authentication
+            and self.keycloak_configuration.device_authentication_claim in token_info
+        ):
+            # ...only add the device auth claim to the claims to extract
+            claims = [self.keycloak_configuration.device_authentication_claim]
+            # If claim based authorization is enabled...
+            if (
+                self.keycloak_configuration.authorization_method
+                == AuthorizationMethod.CLAIM
+            ):
+                # ...add the authorization claim to the claims to extract
+                claims.append(self.keycloak_configuration.authorization_claim)
+
         # Extract claims from token
         user_info = {}
-        for claim in self.keycloak_configuration.claims:
+        for claim in claims:
             try:
                 user_info[claim] = token_info[claim]
             except KeyError:
@@ -139,6 +157,30 @@ class KeycloakBackend(AuthenticationBackend):
                     raise AuthClaimMissing from KeyError
                 log.debug(
                     "Backend is configured to ignore missing claims, continuing..."
+                )
+
+        # Handle Authorization depending on the Claim Method
+        scope_auth = []
+        if (
+            self.keycloak_configuration.authorization_method
+            == AuthorizationMethod.CLAIM
+        ):
+            if self.keycloak_configuration.authorization_claim not in token_info:
+                raise AuthClaimMissing
+            scope_auth = token_info[self.keycloak_configuration.authorization_claim]
+
+        # Check if the device authentication claim is present and evaluated to true
+        # If so, the rest (mapping claims, user mapper, authorization) is skipped
+        if self.keycloak_configuration.enable_device_authentication:
+            log.debug("Device authentication is enabled, checking for device claim")
+            try:
+                if token_info[self.keycloak_configuration.device_authentication_claim]:
+                    log.info("Request contains a device token, skipping user mapping")
+                    return scope_auth, None
+            except KeyError:
+                log.debug(
+                    "Device authentication claim is missing in the token, "
+                    "proceeding with normal authentication"
                 )
 
         # Call user function to get user object
@@ -155,15 +197,5 @@ class KeycloakBackend(AuthenticationBackend):
         if not user:
             log.warning("User object is None. The user-provided function returned None")
             raise AuthUserError
-
-        # Handle Authorization depending on the Claim Method
-        scope_auth = []
-        if (
-            self.keycloak_configuration.authorization_method
-            == AuthorizationMethod.CLAIM
-        ):
-            if self.keycloak_configuration.authorization_claim not in token_info:
-                raise AuthClaimMissing
-            scope_auth = token_info[self.keycloak_configuration.authorization_claim]
 
         return scope_auth, user
