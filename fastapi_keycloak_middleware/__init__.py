@@ -12,6 +12,7 @@ from fastapi_keycloak_middleware.dependencies.get_authorization_result import (
     get_authorization_result,
 )
 from fastapi_keycloak_middleware.dependencies.get_user import get_user
+from fastapi_keycloak_middleware.fast_api_user import FastApiUser
 from fastapi_keycloak_middleware.middleware import KeycloakMiddleware
 from fastapi_keycloak_middleware.schemas.authorization_methods import (
     AuthorizationMethod,
@@ -21,7 +22,6 @@ from fastapi_keycloak_middleware.schemas.keycloak_configuration import (
     KeycloakConfiguration,
 )
 from fastapi_keycloak_middleware.schemas.match_strategy import MatchStrategy
-from fastapi_keycloak_middleware.fast_api_user import FastApiUser
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
