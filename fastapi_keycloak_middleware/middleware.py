@@ -138,9 +138,6 @@ class KeycloakMiddleware:
 
             scope["auth"], scope["user"] = auth, user
 
-            log.debug("Sending request to next middleware")
-            await self.app(scope, receive, send)  # Token is valid
-
         except AuthHeaderMissing:  # Request has no 'Authorization' HTTP Header
             response = self._auth_header_missing()
             log.warning("Request is missing an 'Authorization' HTTP header")
@@ -172,6 +169,9 @@ class KeycloakMiddleware:
             log.error("An error occurred while authenticating the user")
             await response(scope, receive, send)
             return
+
+        log.debug("Sending request to next middleware")
+        await self.app(scope, receive, send)  # Token is valid
 
     @staticmethod
     def _auth_header_missing(*args, **kwargs):  # pylint: disable=unused-argument
