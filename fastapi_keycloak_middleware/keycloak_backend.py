@@ -32,6 +32,7 @@ from fastapi_keycloak_middleware.schemas.keycloak_configuration import (
 
 log = logging.getLogger(__name__)
 
+
 class KeycloakBackend(AuthenticationBackend):
     """
     Backend to perform authentication using Keycloak
@@ -56,16 +57,18 @@ class KeycloakBackend(AuthenticationBackend):
                 + "\n-----END PUBLIC KEY-----"
             )
 
-    def _get_keycloak_openid(self, keycloak_configuration: KeycloakConfiguration) -> KeycloakOpenID:
+    def _get_keycloak_openid(
+        self, keycloak_configuration: KeycloakConfiguration
+    ) -> KeycloakOpenID:
         """
         Instance-scoped KeycloakOpenID object
         """
         return KeycloakOpenID(
-                   server_url=self.keycloak_configuration.url,
-                   client_id=self.keycloak_configuration.client_id,
-                   realm_name=self.keycloak_configuration.realm,
-                   client_secret_key=self.keycloak_configuration.client_secret,
-                   verify=self.keycloak_configuration.verify
+            server_url=self.keycloak_configuration.url,
+            client_id=self.keycloak_configuration.client_id,
+            realm_name=self.keycloak_configuration.realm,
+            client_secret_key=self.keycloak_configuration.client_secret,
+            verify=self.keycloak_configuration.verify,
         )
 
     async def _get_user(self, userinfo: typing.Dict[str, typing.Any]) -> BaseUser:
@@ -155,7 +158,7 @@ class KeycloakBackend(AuthenticationBackend):
                 if self.keycloak_configuration.reject_on_missing_claim:
                     log.warning("Rejecting request because of missing claim")
                     raise AuthClaimMissing from KeyError
-                    #raise AuthClaimMissing(str(token_info))
+                    # raise AuthClaimMissing(str(token_info))
                 log.debug(
                     "Backend is configured to ignore missing claims, continuing..."
                 )
