@@ -1,7 +1,7 @@
 """
 This module contains the schema to configure Keycloak.
 """
-
+from typing import Union
 from pydantic import BaseModel, Field
 
 from fastapi_keycloak_middleware.schemas.authorization_methods import (
@@ -54,7 +54,7 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
         is extracted from the claim and checked if its a truthy value.
         To be specific, ``bool(value)`` must evaluate to ``True``.
     :param verify: Whether to verify SSL connection. Defaults to ``True``
-    :type verify: bool, optional
+    :type verify: Union[bool,str], optional
     """
 
     realm: str = Field(..., title="Realm", description="The realm to use.")
@@ -114,8 +114,8 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
         description="The claim that will be checked. If present and if it evaluates to"
         " true, the device authentication will be applied for the request.",
     )
-    verify: bool = Field(
-        True,
+    verify: Union[bool,str] = Field(
+        False,
         title="Verify",
         description="Whether to verify the SSL connection",
     )
