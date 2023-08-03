@@ -53,6 +53,8 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
         ``enable_device_authentication`` is set to ``True``. The value
         is extracted from the claim and checked if its a truthy value.
         To be specific, ``bool(value)`` must evaluate to ``True``.
+    :param verify: Whether to verify SSL connection. Defaults to ``True``
+    :type verify: bool, optional
     """
 
     realm: str = Field(..., title="Realm", description="The realm to use.")
@@ -111,4 +113,9 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
         title="Device Authentication Claim",
         description="The claim that will be checked. If present and if it evaluates to"
         " true, the device authentication will be applied for the request.",
+    )
+    verify: bool = Field(
+        True,
+        title="Verify",
+        description="Whether to verify the SSL connection",
     )
