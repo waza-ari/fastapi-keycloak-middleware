@@ -158,7 +158,6 @@ class KeycloakBackend(AuthenticationBackend):
                 if self.keycloak_configuration.reject_on_missing_claim:
                     log.warning("Rejecting request because of missing claim")
                     raise AuthClaimMissing from KeyError
-                    # raise AuthClaimMissing(str(token_info))
                 log.debug(
                     "Backend is configured to ignore missing claims, continuing..."
                 )
