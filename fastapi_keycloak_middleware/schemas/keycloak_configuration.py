@@ -2,6 +2,7 @@
 This module contains the schema to configure Keycloak.
 """
 from typing import Union
+
 from pydantic import BaseModel, Field
 
 from fastapi_keycloak_middleware.schemas.authorization_methods import (
@@ -114,7 +115,7 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
         description="The claim that will be checked. If present and if it evaluates to"
         " true, the device authentication will be applied for the request.",
     )
-    verify: Union[bool,str] = Field(
+    verify: Union[bool, str] = Field(
         False,
         title="Verify",
         description="Whether to verify the SSL connection",
