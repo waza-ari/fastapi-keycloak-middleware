@@ -116,7 +116,7 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
         " true, the device authentication will be applied for the request.",
     )
     verify: Union[bool, str] = Field(
-        False,
+        True,
         title="Verify",
         description="Whether to verify the SSL connection",
     )
