@@ -46,21 +46,30 @@ class KeycloakBackend(AuthenticationBackend):
         ],
     ):
         self.keycloak_configuration = keycloak_configuration
+        self.keycloak_openid = self._get_keycloak_openid(keycloak_configuration)
         self.get_user = user_mapper if user_mapper else self._get_user
 
         # Fetch KC public key if needed
         if not keycloak_configuration.use_introspection_endpoint:
-            keycloak_openid = KeycloakOpenID(
-                server_url=keycloak_configuration.url,
-                client_id=keycloak_configuration.client_id,
-                realm_name=keycloak_configuration.realm,
-                client_secret_key=keycloak_configuration.client_secret,
-            )
             self.keycloak_public_key = (
                 "-----BEGIN PUBLIC KEY-----\n"
-                + keycloak_openid.public_key()
+                + self.keycloak_openid.public_key()
                 + "\n-----END PUBLIC KEY-----"
             )
+
+    def _get_keycloak_openid(
+        self, keycloak_configuration: KeycloakConfiguration
+    ) -> KeycloakOpenID:
+        """
+        Instance-scoped KeycloakOpenID object
+        """
+        return KeycloakOpenID(
+            server_url=self.keycloak_configuration.url,
+            client_id=self.keycloak_configuration.client_id,
+            realm_name=self.keycloak_configuration.realm,
+            client_secret_key=self.keycloak_configuration.client_secret,
+            verify=self.keycloak_configuration.verify,
+        )
 
     async def _get_user(self, userinfo: typing.Dict[str, typing.Any]) -> BaseUser:
         """
@@ -95,17 +104,11 @@ class KeycloakBackend(AuthenticationBackend):
 
         # Depending on the chosen method by the user, either
         # use the introspection endpoint or decode the token
-        keycloak_openid = KeycloakOpenID(
-            server_url=self.keycloak_configuration.url,
-            client_id=self.keycloak_configuration.client_id,
-            realm_name=self.keycloak_configuration.realm,
-            client_secret_key=self.keycloak_configuration.client_secret,
-        )
         if self.keycloak_configuration.use_introspection_endpoint:
             log.debug("Using introspection endpoint to validate token")
             # Call introspect endpoint to check if token is valid
             try:
-                token_info = keycloak_openid.introspect(token[1])
+                token_info = self.keycloak_openid.introspect(token[1])
             except keycloak.exceptions.KeycloakPostError as exc:
                 raise AuthKeycloakError from exc
         else:
@@ -117,7 +120,7 @@ class KeycloakBackend(AuthenticationBackend):
                 "verify_exp": True,
             }
             try:
-                token_info = keycloak_openid.decode_token(
+                token_info = self.keycloak_openid.decode_token(
                     token[1], key=self.keycloak_public_key, options=options
                 )
             except ExpiredSignatureError as exc:

@@ -191,7 +191,9 @@ You can also configure the class to extract other / additional claims from the t
 Full Example
 ^^^^^^^^^^^^
 
-Everything combined might look like this:
+Everything combined might look like the following. Important note: the KeycloakConfiguration.verify attribute maps to the 
+[KeycloakOpenID](https://github.com/marcospereirampj/python-keycloak/blob/5957607ad07536b94d878c3ce5d403c212b35220/src/keycloak/keycloak_openid.py#L62) verify
+attribute, which must be the True or False bool or the str path to the CA bundle used for the cert. The default KeycloakConfiguration.verify value is True.
 
 .. code-block:: python
 
@@ -206,6 +208,7 @@ Everything combined might look like this:
         client_secret="<Client Secret>",
         claims=["sub", "name", "email", "your-claim"], # Modify claims
         reject_on_missing_claim=False, # Control behaviour when claims are missing
+        verify="<Path to CA File>/ca.pem" # Can be True, False or the path to the CA file used to sign certs
     )
 
     async def map_user(userinfo: typing.Dict[str, typing.Any]) -> User:
