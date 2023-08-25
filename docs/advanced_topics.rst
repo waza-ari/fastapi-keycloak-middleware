@@ -58,6 +58,30 @@ If you want to still use the token endpoint to validate the token, you can opt t
 
 Please make sure to understand the consequences before applying this configuration.
 
+JWT Decoding Options
+^^^^^^^^^^^^^^^^^^^^
+
+The upstream project `python-keycloak` uses `python-jose` under the hood to verify
+JWT tokens. This library uses sensible defaults for the JWT verification, but it is
+possible to modify the decode options if needed.
+
+.. code-block:: python
+   :emphasize-lines: 6,7,8
+
+    # Set up Keycloak
+    keycloak_config = KeycloakConfiguration(
+        # ...
+        decode_options={
+            "verify_signature": True,
+            "verify_aud": False,
+            "verify_exp": True,
+        }
+    )
+
+Unfortunately, `python-jose` does not document the available options very well. Please
+refer to the source code of `python-jose` to confirm the verification options that can be
+configured: https://github.com/mpdavis/python-jose/blob/4b0701b46a8d00988afcc5168c2b3a1fd60d15d8/jose/jwt.py#L81
+
 Excluding Endpoints
 ^^^^^^^^^^^^^^^^^^^
 

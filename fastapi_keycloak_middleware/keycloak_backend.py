@@ -114,14 +114,11 @@ class KeycloakBackend(AuthenticationBackend):
         else:
             log.debug("Using keycloak public key to validate token")
             # Decode Token locally using the public key
-            options = {
-                "verify_signature": True,
-                "verify_aud": True,
-                "verify_exp": True,
-            }
             try:
                 token_info = self.keycloak_openid.decode_token(
-                    token[1], key=self.keycloak_public_key, options=options
+                    token[1],
+                    key=self.keycloak_public_key,
+                    options=self.keycloak_configuration.decode_options,
                 )
             except ExpiredSignatureError as exc:
                 raise AuthTokenExpired from exc

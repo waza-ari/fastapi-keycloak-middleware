@@ -1,7 +1,7 @@
 """
 This module contains the schema to configure Keycloak.
 """
-from typing import Union
+from typing import Dict, Union
 
 from pydantic import BaseModel, Field
 
@@ -56,6 +56,12 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
         To be specific, ``bool(value)`` must evaluate to ``True``.
     :param verify: Whether to verify SSL connection. Defaults to ``True``
     :type verify: Union[bool,str], optional
+    :param decode_options: Defines options to be passed to `python-jose`'s `decode``
+        function. Defaults to ``{"verify_signature": True, "verify_aud": True,
+        "verify_exp": True}``. See the following project for an overview of
+        acceptable options:
+        https://github.com/mpdavis/python-jose/blob/4b0701b46a8d00988afcc5168c2b3a1fd60d15d8/jose/jwt.py#L81
+    :type decode_options: Dict[str, Union[bool,int]], optional
     """
 
     realm: str = Field(..., title="Realm", description="The realm to use.")
@@ -119,4 +125,13 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
         True,
         title="Verify",
         description="Whether to verify the SSL connection",
+    )
+    decode_options: Dict[str, Union[bool, int]] = Field(
+        {
+            "verify_signature": True,
+            "verify_aud": True,
+            "verify_exp": True,
+        },
+        title="JWT Decode Options",
+        description="Decode options that are passed to python-jose decode function.",
     )
