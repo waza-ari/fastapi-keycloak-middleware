@@ -42,11 +42,11 @@ class KeycloakMiddleware:
     :param keycloak_configuration: KeyCloak configuration object. For potential
         options, see the KeycloakConfiguration schema.
     :type keycloak_configuration: KeycloakConfiguration
-    :param exclude_paths: List of paths that should be excluded from authentication.
+    :param exclude_patterns: List of paths that should be excluded from authentication.
         Defaults to an empty list. The strings will be compiled to regular expressions
         and used to match the path. If the path matches, the middleware
         will skip authentication.
-    :type exclude_paths: typing.List[str], optional
+    :type exclude_patterns: typing.List[str], optional
     :param user_mapper: Custom async function that gets the userinfo extracted from AT
         and should return a representation of the user that is meaningful to you,
         the user of this library, defaults to None
