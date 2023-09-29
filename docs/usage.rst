@@ -79,12 +79,12 @@ Customize User Getter
 
 By default an instance of :code:`FastApiUser` will be returned. Refer to the API documentation for details about the information stored in this class.
 
-In many cases, you'll have your own user model you want to work with and therefore would like to return your own user object. This can be done by providing a custom callback function to the :code:`get_user` parameter of the middleware initialization class:
+In many cases, you'll have your own user model you want to work with and therefore would like to return your own user object. This can be done by providing a custom callback function to the :code:`user_mapper` parameter of the middleware initialization class:
 
 .. code-block:: python
    :emphasize-lines: 1,2,3,9
 
-   async def get_user(userinfo: typing.Dict[str, typing.Any]) -> User:
+   async def map_user(userinfo: typing.Dict[str, typing.Any]) -> User:
        # Do something with the userinfo
        return User()
 
@@ -92,7 +92,7 @@ In many cases, you'll have your own user model you want to work with and therefo
     app.add_middleware(
         KeycloakMiddleware,
         keycloak_configuration=keycloak_config,
-        get_user=get_user,
+        user_mapper=map_user,
     )
 
 The :code:`userinfo` parameter is a dictionary containing the claims extracted from the access token. You can rely on all the claims to be populated, as tokens without these claims are rejected in a previous step by default. This behavior can be changed by setting the :code:`reject_on_missing_claim` parameter of the :code:`KeycloakConfiguration` class to :code:`False`, then you need to handle potentially missing claims yourself.
@@ -173,7 +173,7 @@ This will give you a user object that is still bound to the database session, so
 Modify Extracted Claims
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-You can also configure the class to extract other / additional claims from the token and pass it to the :code:`get_user` function:
+You can also configure the class to extract other / additional claims from the token and pass it to the :code:`user_mapper` function:
 
 .. code-block:: python
    :emphasize-lines: 7
@@ -246,7 +246,7 @@ attribute, which must be the True or False bool or the str path to the CA bundle
     app.add_middleware(
         KeycloakMiddleware,
         keycloak_configuration=keycloak_config,
-        get_user=auth_get_user,
+        user_mapper=map_user,
     )
 
     @app.get("/")
