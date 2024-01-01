@@ -1,7 +1,7 @@
 """
 This module contains the schema to configure Keycloak.
 """
-from typing import Dict, Union
+from typing import Dict, Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -20,9 +20,8 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
     :param url: URL of the Keycloak server. If you use legacy Keycloak versions
         or still have the auth context, you need to add the auth context to the URL.
     :type url: str
-    :param client_id: Client ID of the client used to validate the token. The client
-        id is only needed if you use the introspection endpoint.
-    :type client_id: str, optional
+    :param client_id: Client ID of the client used to validate the token.
+    :type client_id: str
     :param client_secret: Client secret of the client used to validate the token.
         The client secret is only needed if you use the introspection endpoint.
     :type client_secret: str, optional
@@ -67,8 +66,8 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
     realm: str = Field(..., title="Realm", description="The realm to use.")
     url: str = Field(..., title="URL", description="The URL of the Keycloak server.")
     client_id: str = Field(..., title="Client ID", description="The client ID.")
-    client_secret: str = Field(
-        ..., title="Client Secret", description="The client secret."
+    client_secret: Optional[str] = Field(
+        None, title="Client Secret", description="The client secret."
     )
     claims: list[str] = Field(
         [
