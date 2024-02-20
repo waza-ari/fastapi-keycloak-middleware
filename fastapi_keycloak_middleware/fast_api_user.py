@@ -4,6 +4,7 @@ This module contains a base user implementation
 It is mainly used if the user does not provide a custom function to retrieve
 the user based on the token claims
 """
+
 from starlette.authentication import BaseUser
 
 
