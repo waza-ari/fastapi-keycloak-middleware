@@ -8,8 +8,13 @@ import typing
 from typing import Tuple
 
 import keycloak
-from jose import ExpiredSignatureError, JWTError
-from jose.exceptions import JWTClaimsError
+from jwcrypto.jwt import (
+    JWTExpired,
+    JWTInvalidClaimFormat,
+    JWTInvalidClaimValue,
+    JWTMissingClaim,
+    JWTMissingKey,
+)
 from keycloak import KeycloakOpenID
 from starlette.authentication import AuthCredentials, AuthenticationBackend, BaseUser
 from starlette.requests import HTTPConnection
@@ -120,11 +125,18 @@ class KeycloakBackend(AuthenticationBackend):
                     key=self.keycloak_public_key,
                     options=self.keycloak_configuration.decode_options,
                 )
-            except ExpiredSignatureError as exc:
+            except JWTExpired as exc:
                 raise AuthTokenExpired from exc
-            except JWTClaimsError as exc:
+            except JWTMissingClaim as exc:
                 raise AuthClaimMissing from exc
-            except JWTError as exc:
+            except (
+                JWTInvalidClaimValue,
+                JWTInvalidClaimFormat,
+                JWTMissingKey,
+                KeyError,
+                ValueError,
+                TypeError,
+            ) as exc:
                 raise AuthInvalidToken from exc
 
         # Calculate claims to extract
