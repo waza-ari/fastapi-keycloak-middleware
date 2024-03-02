@@ -8,9 +8,9 @@ packages = [{ include = "fastapi_keycloak_middleware" }]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-fastapi = ">=0.73.0"
+fastapi = ">=0.110.0"
 install = "^1.3.5"
-python-keycloak = ">2.14.0,<4"
+python-keycloak = "^3.9.1"
 
 
 [tool.poetry.group.dev.dependencies]
