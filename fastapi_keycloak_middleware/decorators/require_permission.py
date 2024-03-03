@@ -2,6 +2,7 @@
 This module providers a decorator that can be used to check if a user has a specific
 permission.
 """
+
 # pylint: disable=logging-not-lazy,consider-using-f-string
 # NOTE: Using % formatting is the safest way as we allow custom loggers.
 #       There could be custom loggers that handle arguments differently

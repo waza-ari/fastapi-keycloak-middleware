@@ -4,6 +4,7 @@ This module provides the middleware for the FastAPI framework.
 It is inspired by the fastapi-auth-middleware package published
 here: https://github.com/code-specialist/fastapi-auth-middleware
 """
+
 import logging
 import re
 import typing

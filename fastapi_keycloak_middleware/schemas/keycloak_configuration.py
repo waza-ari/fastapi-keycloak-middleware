@@ -1,6 +1,7 @@
 """
 This module contains the schema to configure Keycloak.
 """
+
 from typing import Dict, Optional, Union
 
 from pydantic import BaseModel, Field

@@ -3,6 +3,7 @@ This module contains the Keycloak backend.
 
 It is used by the middleware to perform the actual authentication.
 """
+
 import logging
 import typing
 from typing import Tuple

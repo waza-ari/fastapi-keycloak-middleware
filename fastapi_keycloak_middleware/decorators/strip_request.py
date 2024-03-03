@@ -6,6 +6,7 @@ would lead to a Python exception if the argument is not removed.
 This wrapper will check if the function contains the request argument and if
 not, will remove it from kwargs before calling the function.
 """
+
 from functools import wraps
 from inspect import signature
 
