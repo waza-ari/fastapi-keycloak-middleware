@@ -11,7 +11,7 @@ import typing
 
 from fastapi import FastAPI
 from starlette.requests import HTTPConnection
-from starlette.responses import PlainTextResponse
+from starlette.responses import JSONResponse
 from starlette.types import Receive, Scope, Send
 
 from fastapi_keycloak_middleware.exceptions import (
@@ -164,8 +164,9 @@ class KeycloakMiddleware:
             return
 
         except Exception as exc:  # pylint: disable=broad-except
-            response = PlainTextResponse(
-                f"An error occurred: {exc.__class__.__name__}", status_code=401
+            response = JSONResponse(
+                {"detail": f"An error occurred: {exc.__class__.__name__}"},
+                status_code=401,
             )
             log.error("An error occurred while authenticating the user")
             await response(scope, receive, send)
@@ -180,8 +181,9 @@ class KeycloakMiddleware:
         Returns a response notifying the user that the request
         is missing an 'Authorization' HTTP header.
         """
-        return PlainTextResponse(
-            "Your request is missing an 'Authorization' HTTP header", status_code=401
+        return JSONResponse(
+            {"detail": "Your request is missing an 'Authorization' HTTP header"},
+            status_code=401,
         )
 
     @staticmethod
@@ -189,8 +191,8 @@ class KeycloakMiddleware:
         """
         Returns a response notifying the user that the token has expired.
         """
-        return PlainTextResponse(
-            "Your 'Authorization' HTTP header is invalid", status_code=401
+        return JSONResponse(
+            {"detail": "Your 'Authorization' HTTP header is invalid"}, status_code=401
         )
 
     @staticmethod
@@ -198,8 +200,8 @@ class KeycloakMiddleware:
         """
         Returns a response notifying the user that the user was not found.
         """
-        return PlainTextResponse(
-            "Could not find a user based on this token", status_code=401
+        return JSONResponse(
+            {"detail": "Could not find a user based on this token"}, status_code=401
         )
 
     @staticmethod
@@ -207,6 +209,6 @@ class KeycloakMiddleware:
         """
         Returns a response notifying the user that the acess token is invalid.
         """
-        return PlainTextResponse(
-            "Unable to verify provided access token", status_code=401
+        return JSONResponse(
+            {"detail": "Unable to verify provided access token"}, status_code=401
         )

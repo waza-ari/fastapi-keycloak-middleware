@@ -15,7 +15,7 @@ from inspect import Parameter, signature
 from typing import Callable
 
 import starlette
-from starlette.exceptions import HTTPException
+from fastapi import HTTPException
 from starlette.requests import Request
 
 from fastapi_keycloak_middleware.decorators.strip_request import strip_request
