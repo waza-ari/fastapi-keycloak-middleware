@@ -97,6 +97,35 @@ By default, the :code:`roles` claim will be checked to build the scope. You can 
 
 In this example, the library would extract the scopes from the :code:`permissions` claim.
 
+You can also provide a custom claim path with the :code:`authorization_claim_path` parameter. 
+This is useful if the claim is nested within the payload.
+
+.. code-block:: python
+    :emphasize-lines: 6
+
+    app.add_middleware(
+        KeycloakMiddleware,
+        keycloak_configuration=keycloak_config,
+        get_user=auth_get_user,
+        authorization_method=AuthorizationMethod.CLAIM,
+        authorization_claim_path=["realm_access", "roles"]
+    )
+
+This would extract the scopes from the :code:`roles` claim nested within the :code:`realm_access` claim.
+.. code-block:: json
+    
+    "claimX": "",
+    "realm_access": {
+        "roles": [
+            "supporter",
+            "admin",
+            "user"
+        ]
+    },
+    "claimY": "",
+
+It will prefer the :code:`authorization_claim_path` parameter over the :code:`authorization_claim` parameter if both are provided.
+
 Permission Mapping
 ^^^^^^^^^^^^^^^^^^
 

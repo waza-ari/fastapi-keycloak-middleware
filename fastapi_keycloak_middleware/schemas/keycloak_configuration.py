@@ -40,6 +40,9 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
     :param authorization_claim: Claim to use for extracting authorization scopes.
         Defaults to ``roles``.
     :type authorization_claim: str, optional
+    :param authorization_claim_path: The path to the Claim to use for authorization. To use if the authorization Claim is nested in the payload.
+        Defaults to ``[]``.
+    :type authorization_claim_path: list[str], optional
     :param use_introspection_endpoint: Whether to use the introspection endpoint
         for token validation. Should not be needed for Keycloak in general
         as Keycloak doesn't support opaque tokens. Defaults to ``False``.
@@ -101,6 +104,11 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
         "roles",
         title="Authorization Claim",
         description="The claim to use for authorization.",
+    )
+    authorization_claim_path: list[str] = Field(
+        [],
+        title="Path to the Authorization Claim",
+        description="The path to the claim to use for authorization. To use if the Authorization Claim is nested in the payload.",
     )
     use_introspection_endpoint: bool = Field(
         False,

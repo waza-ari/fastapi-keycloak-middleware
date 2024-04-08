@@ -166,9 +166,18 @@ class KeycloakBackend(AuthenticationBackend):
             self.keycloak_configuration.authorization_method
             == AuthorizationMethod.CLAIM
         ):
-            if self.keycloak_configuration.authorization_claim not in token_info:
-                raise AuthClaimMissing
-            scope_auth = token_info[self.keycloak_configuration.authorization_claim]
+            #Check if a path to the Claim is provided otherwise use the Claim directly
+            if self.keycloak_configuration.authorization_claim_path:
+                scope_auth = token_info
+                for path in self.keycloak_configuration.authorization_claim_path:
+                    try:
+                        scope_auth = scope_auth[path]
+                    except KeyError:
+                        raise AuthClaimMissing
+            else:
+                if self.keycloak_configuration.authorization_claim not in token_info:
+                    raise AuthClaimMissing
+                scope_auth = token_info[self.keycloak_configuration.authorization_claim]           
 
         # Check if the device authentication claim is present and evaluated to true
         # If so, the rest (mapping claims, user mapper, authorization) is skipped
