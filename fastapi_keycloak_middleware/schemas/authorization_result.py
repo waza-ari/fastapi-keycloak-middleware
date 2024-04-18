@@ -24,19 +24,19 @@ class AuthorizationResult(BaseModel):  # pylint: disable=too-few-public-methods
 
     #: The method that was used to authorize the user
     method: typing.Union[None, AuthorizationMethod] = Field(
-        None,
+        default=None,
         title="Method",
         description="The method used to authorize the user.",
     )
     #: Whether the user is authorized or not
     authorized: bool = Field(
-        False,
+        default=False,
         title="Authorized",
         description="Whether the user is authorized or not.",
     )
     #: The scopes that matched the user's scopes
     matched_scopes: typing.List[str] = Field(
-        [],
+        default=[],
         title="Matched Scopes",
         description="The scopes that matched the user's scopes.",
     )
