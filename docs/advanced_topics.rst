@@ -110,8 +110,8 @@ The middleware provides a configuration option to exclude certain paths from aut
     ]
 
     app = FastAPI()
-    app.add_middleware(
-        KeycloakMiddleware,
+    setup_keycloak_middleware(
+        app,
         # ...
         exclude_patterns=excluded_routes,
     )
@@ -137,8 +137,8 @@ Alternatively you can use multiple :code:`FastAPI` applications and mount them t
     # This first app is secured
     secured_app = FastAPI()
 
-    app.add_middleware(
-        KeycloakMiddleware,
+    setup_keycloak_middleware(
+        app,
         # ...
         exclude_patterns=excluded_routes,
     )

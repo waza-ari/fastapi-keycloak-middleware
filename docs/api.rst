@@ -10,6 +10,7 @@ important right here and provide links to the canonical documentation.
 Middleware
 ----------
 
+.. autofunction:: setup_keycloak_middleware
 .. autoclass:: KeycloakMiddleware
     :members:
 

@@ -41,7 +41,7 @@ To enable authorization, simply pass the chosen method to the middleware initial
 .. code-block:: python
 
     from fastapi import FastAPI
-    from fastapi_keycloak_middleware import KeycloakConfiguration, KeycloakMiddleware, AuthorizationMethod
+    from fastapi_keycloak_middleware import KeycloakConfiguration, AuthorizationMethod, setup_keycloak_middleware
 
     # Set up Keycloak
     keycloak_config = KeycloakConfiguration(
@@ -53,8 +53,8 @@ To enable authorization, simply pass the chosen method to the middleware initial
 
     app = FastAPI()
 
-    app.add_middleware(
-        KeycloakMiddleware,
+    setup_keycloak_middleware(
+        app,
         keycloak_configuration=keycloak_config,
         get_user=auth_get_user,
         authorization_method=AuthorizationMethod.CLAIM,
@@ -87,8 +87,8 @@ By default, the :code:`roles` claim will be checked to build the scope. You can 
 .. code-block:: python
     :emphasize-lines: 6
 
-    app.add_middleware(
-        KeycloakMiddleware,
+    setup_keycloak_middleware(
+        app,
         keycloak_configuration=keycloak_config,
         get_user=auth_get_user,
         authorization_method=AuthorizationMethod.CLAIM,
@@ -106,7 +106,7 @@ In the examples above, the content of the claims is used unmodified. You can add
     :emphasize-lines: 23
 
     from fastapi import FastAPI
-    from fastapi_keycloak_middleware import KeycloakConfiguration, KeycloakMiddleware, AuthorizationMethod
+    from fastapi_keycloak_middleware import KeycloakConfiguration, AuthorizationMethod, setup_keycloak_middleware
 
     async def scope_mapper(claim_auth: typing.List[str]) -> typing.List[str]:
         """
@@ -124,8 +124,8 @@ In the examples above, the content of the claims is used unmodified. You can add
 
         return permissions
 
-    app.add_middleware(
-        KeycloakMiddleware,
+    setup_keycloak_middleware(
+        app,
         keycloak_configuration=keycloak_config,
         get_user=auth_get_user,
         scope_mapper=scope_mapper,

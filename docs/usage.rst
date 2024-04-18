@@ -11,7 +11,7 @@ This is a very basic example on how to add the Middleware to a FastAPI applicati
 .. code-block:: python
 
    from fastapi import FastAPI
-   from fastapi_keycloak_middleware import KeycloakConfiguration, KeycloakMiddleware
+   from fastapi_keycloak_middleware import KeycloakConfiguration, setup_keycloak_middleware
 
    # Set up Keycloak
     keycloak_config = KeycloakConfiguration(
@@ -24,8 +24,8 @@ This is a very basic example on how to add the Middleware to a FastAPI applicati
     app = FastAPI()
 
     # Add middleware with basic config
-    app.add_middleware(
-        KeycloakMiddleware,
+    setup_keycloak_middleware(
+        app,
         keycloak_configuration=keycloak_config,
     )
 
@@ -46,6 +46,7 @@ This is a minimal example of using the middleware and will already perform the f
    * :code:`preferred_username` - part of the :code:`profile` scope, defining the user's preferred username. Note that as per openid specifications, you must not rely on this claim to be unique for all users
    * :code:`email` - part of the :code:`email` scope, defining the user's email address
 * Get the user object based on the extracted information. As no custom callback function is provided, it will return an instance of :code:`FastApiUser` containing extracted information.
+* Add proper 401 and 403 responses to the OpenAPI schema
 
 .. note::
    **Authorization** is disabled by default, so no authorization scopes will be stored.
@@ -89,8 +90,8 @@ In many cases, you'll have your own user model you want to work with and therefo
        return User()
 
     # Add middleware with basic config
-    app.add_middleware(
-        KeycloakMiddleware,
+    setup_keycloak_middleware(
+        app,
         keycloak_configuration=keycloak_config,
         user_mapper=map_user,
     )
@@ -188,6 +189,46 @@ You can also configure the class to extract other / additional claims from the t
         reject_on_missing_claim=False, # Control behaviour when claims are missing
     )
 
+Swagger UI Integration
+^^^^^^^^^^^^^^^^^^^^^^
+
+It is also possible to configure the Swagger UI to display endpoints being protected by this middleware correctly
+and handle authentication to test the endpoints. This has not been in place in earlier versions, so it is disabled
+by default for now.
+
+To enable this feature, you need to set :code:`add_swagger_auth` flag to :code:`True` when configuring the middleware.
+Also, it is recommended to setup a separate Keycloak client for this purpose, as it should be a public client. This
+separate client is then configured using the :code:`swagger_client_id`  parameter of :code:`KeycloakConfiguration`.
+
+.. code-block:: python
+   :emphasize-lines: 7
+
+    keycloak_config = KeycloakConfiguration(
+        url="https://sso.your-keycloak.com/auth/",
+        realm="<Realm Name>",
+        client_id="<Client ID>",
+        client_secret="<Client Secret>",
+        swagger_client_id="<Swagger Client ID>",
+        swagger_auth_scopes=["openid", "profile"], # Optional
+        swagger_auth_pkce=True, # Optional
+        swagger_scheme_name="keycloak" # Optional
+    )
+
+    # Set up Keycloak
+    keycloak_config = KeycloakConfiguration(
+        url="https://sso.your-keycloak.com/auth/",
+        realm="<Realm Name>",
+        client_id="<Client ID>",
+        client_secret="<Client Secret>",
+        add_swagger_auth=True
+    )
+
+There are three more parameters that can be used to customize the Swagger UI integration:
+
+* :code:`swagger_auth_scopes` - The scopes that should be selected by default when hitting the Authorize button in Swagger UI. Defaults to :code:`['openid', 'profile']`
+* :code:`swagger_auth_pkce` - Whether to use PKCE for the Swagger UI client. Defaults to :code:`True`. It is recommended to use Authorization Code Flow with PKCE for public clients instead of implicit flow. In Keycloak, this flow is called "Standard flow"
+* :code:`swagger_scheme_name` - The name of the OpenAPI security scheme. Usually there is no need to change this.
+
 Full Example
 ^^^^^^^^^^^^
 
@@ -198,7 +239,7 @@ attribute, which must be the True or False bool or the str path to the CA bundle
 .. code-block:: python
 
     from fastapi import FastAPI
-    from fastapi_keycloak_middleware import KeycloakConfiguration, KeycloakMiddleware
+    from fastapi_keycloak_middleware import KeycloakConfiguration, setup_keycloak_middleware
 
     # Set up Keycloak connection
     keycloak_config = KeycloakConfiguration(
@@ -243,8 +284,8 @@ attribute, which must be the True or False bool or the str path to the CA bundle
     app = FastAPI()
 
     # Add middleware with basic config
-    app.add_middleware(
-        KeycloakMiddleware,
+    setup_keycloak_middleware(
+        app,
         keycloak_configuration=keycloak_config,
         user_mapper=map_user,
     )
