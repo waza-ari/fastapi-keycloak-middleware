@@ -64,14 +64,14 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
     :type decode_options: Dict[str, Union[bool,int]], optional
     """
 
-    realm: str = Field(..., title="Realm", description="The realm to use.")
-    url: str = Field(..., title="URL", description="The URL of the Keycloak server.")
-    client_id: str = Field(..., title="Client ID", description="The client ID.")
+    realm: str = Field(title="Realm", description="The realm to use.")
+    url: str = Field(title="URL", description="The URL of the Keycloak server.")
+    client_id: str = Field(title="Client ID", description="The client ID.")
     client_secret: Optional[str] = Field(
-        None, title="Client Secret", description="The client secret."
+        default=None, title="Client Secret", description="The client secret."
     )
     claims: list[str] = Field(
-        [
+        default=[
             "sub",
             "name",
             "family_name",
@@ -83,32 +83,32 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
         description="The claims to add to the user object.",
     )
     reject_on_missing_claim: bool = Field(
-        True,
+        default=True,
         title="Reject on Missing Claim",
         description="Whether to reject the request if a claim is missing.",
     )
     authentication_scheme: str = Field(
-        "Bearer",
+        default="Bearer",
         title="Authentication Scheme",
         description="The authentication scheme to use.",
     )
     authorization_method: AuthorizationMethod = Field(
-        AuthorizationMethod.NONE,
+        default=AuthorizationMethod.NONE,
         title="Authorization Method",
         description="The authorization method to use.",
     )
     authorization_claim: str = Field(
-        "roles",
+        default="roles",
         title="Authorization Claim",
         description="The claim to use for authorization.",
     )
     use_introspection_endpoint: bool = Field(
-        False,
+        default=False,
         title="Use Introspection Endpoint",
         description="Whether to use the introspection endpoint.",
     )
     enable_device_authentication: bool = Field(
-        False,
+        default=False,
         title="Enable Device Authentication",
         description="Whether to enable device authentication. If device authentication"
         " is enabled, the middleware will ignore required user claims and not attempt"
@@ -116,18 +116,18 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
         " forwarded unmodified.",
     )
     device_authentication_claim: str = Field(
-        "is_device",
+        default="is_device",
         title="Device Authentication Claim",
         description="The claim that will be checked. If present and if it evaluates to"
         " true, the device authentication will be applied for the request.",
     )
     verify: Union[bool, str] = Field(
-        True,
+        default=True,
         title="Verify",
         description="Whether to verify the SSL connection",
     )
     decode_options: Dict[str, Union[bool, int]] = Field(
-        {
+        default={
             "verify_signature": True,
             "verify_aud": True,
             "verify_exp": True,
