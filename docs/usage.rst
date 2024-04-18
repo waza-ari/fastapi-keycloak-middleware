@@ -201,7 +201,7 @@ Also, it is recommended to setup a separate Keycloak client for this purpose, as
 separate client is then configured using the :code:`swagger_client_id`  parameter of :code:`KeycloakConfiguration`.
 
 .. code-block:: python
-   :emphasize-lines: 7
+   :emphasize-lines: 6,7,8,9,18
 
     keycloak_config = KeycloakConfiguration(
         url="https://sso.your-keycloak.com/auth/",
@@ -214,12 +214,9 @@ separate client is then configured using the :code:`swagger_client_id`  paramete
         swagger_scheme_name="keycloak" # Optional
     )
 
-    # Set up Keycloak
-    keycloak_config = KeycloakConfiguration(
-        url="https://sso.your-keycloak.com/auth/",
-        realm="<Realm Name>",
-        client_id="<Client ID>",
-        client_secret="<Client Secret>",
+    setup_keycloak_middleware(
+        app,
+        keycloak_configuration=keycloak_config,
         add_swagger_auth=True
     )
 
