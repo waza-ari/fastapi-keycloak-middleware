@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fastapi-keycloak-middleware"
-version = "0.3.1"
+version = "0.4.0"
 description = "Middleware for FastAPI to authenticate a user against keycloak"
 authors = ["Daniel Herrmann <daniel.herrmann1@gmail.com>"]
 readme = "README.md"
