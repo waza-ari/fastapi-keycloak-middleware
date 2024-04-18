@@ -189,6 +189,46 @@ You can also configure the class to extract other / additional claims from the t
         reject_on_missing_claim=False, # Control behaviour when claims are missing
     )
 
+Swagger UI Integration
+^^^^^^^^^^^^^^^^^^^^^^
+
+It is also possible to configure the Swagger UI to display endpoints being protected by this middleware correctly
+and handle authentication to test the endpoints. This has not been in place in earlier versions, so it is disabled
+by default for now.
+
+To enable this feature, you need to set :code:`add_swagger_auth` flag to :code:`True` when configuring the middleware.
+Also, it is recommended to setup a separate Keycloak client for this purpose, as it should be a public client. This
+separate client is then configured using the :code:`swagger_client_id`  parameter of :code:`KeycloakConfiguration`.
+
+.. code-block:: python
+   :emphasize-lines: 7
+
+    keycloak_config = KeycloakConfiguration(
+        url="https://sso.your-keycloak.com/auth/",
+        realm="<Realm Name>",
+        client_id="<Client ID>",
+        client_secret="<Client Secret>",
+        swagger_client_id="<Swagger Client ID>",
+        swagger_auth_scopes=["openid", "profile"], # Optional
+        swagger_auth_pkce=True, # Optional
+        swagger_scheme_name="keycloak" # Optional
+    )
+
+    # Set up Keycloak
+    keycloak_config = KeycloakConfiguration(
+        url="https://sso.your-keycloak.com/auth/",
+        realm="<Realm Name>",
+        client_id="<Client ID>",
+        client_secret="<Client Secret>",
+        add_swagger_auth=True
+    )
+
+There are three more parameters that can be used to customize the Swagger UI integration:
+
+* :code:`swagger_auth_scopes` - The scopes that should be selected by default when hitting the Authorize button in Swagger UI. Defaults to :code:`['openid', 'profile']`
+* :code:`swagger_auth_pkce` - Whether to use PKCE for the Swagger UI client. Defaults to :code:`True`. It is recommended to use Authorization Code Flow with PKCE for public clients instead of implicit flow. In Keycloak, this flow is called "Standard flow"
+* :code:`swagger_scheme_name` - The name of the OpenAPI security scheme. Usually there is no need to change this.
+
 Full Example
 ^^^^^^^^^^^^
 

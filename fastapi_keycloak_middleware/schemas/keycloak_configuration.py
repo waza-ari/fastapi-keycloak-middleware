@@ -23,6 +23,8 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
     :type url: str
     :param client_id: Client ID of the client used to validate the token.
     :type client_id: str
+    :param swagger_client_id: Client ID for swagger UI authentication. Defaults to None.
+    :type swagger_client_id: str, optional
     :param client_secret: Client secret of the client used to validate the token.
         The client secret is only needed if you use the introspection endpoint.
     :type client_secret: str, optional
@@ -67,6 +69,9 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
     realm: str = Field(title="Realm", description="The realm to use.")
     url: str = Field(title="URL", description="The URL of the Keycloak server.")
     client_id: str = Field(title="Client ID", description="The client ID.")
+    swagger_client_id: Optional[str] = Field(
+        title="Swagger Client ID", description="The client ID for the swagger UI."
+    )
     client_secret: Optional[str] = Field(
         default=None, title="Client Secret", description="The client secret."
     )

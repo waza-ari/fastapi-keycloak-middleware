@@ -8,7 +8,8 @@ OpenID Connect information.
 import logging
 import typing
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
+from fastapi.security import OpenIdConnect
 
 from fastapi_keycloak_middleware.middleware import KeycloakMiddleware
 from fastapi_keycloak_middleware.schemas.exception_response import ExceptionResponse
@@ -19,7 +20,7 @@ from fastapi_keycloak_middleware.schemas.keycloak_configuration import (
 log = logging.getLogger(__name__)
 
 
-def setup_keycloak_middleware(
+def setup_keycloak_middleware(  # pylint: disable=too-many-arguments
     app: FastAPI,
     keycloak_configuration: KeycloakConfiguration,
     exclude_patterns: typing.List[str] = None,
@@ -28,6 +29,10 @@ def setup_keycloak_middleware(
     ] = None,
     scope_mapper: typing.Callable[[typing.List[str]], typing.List[str]] = None,
     add_exception_response: bool = True,
+    add_swagger_auth: bool = False,
+    swagger_auth_scopes: typing.List[str] = None,
+    swagger_auth_pkce: bool = True,
+    swagger_scheme_name: str = "keycloak-openid",
 ):
     """
     This function can be used to initialize the middleware on an existing
@@ -55,6 +60,21 @@ def setup_keycloak_middleware(
         extracted from the token to permissions meaningful for your application,
         defaults to None
     :type scope_mapper: typing.Callable[[typing.List[str]], typing.List[str]], optional
+    :param add_exception_response: Whether to add exception responses for 401 and 403.
+        Defaults to True.
+    :type add_exception_response: bool, optional
+    :param add_swagger_auth: Whether to add OpenID Connect authentication to the OpenAPI
+        schema. Defaults to False.
+    :type add_swagger_auth: bool, optional
+    :param swagger_auth_scopes: Scopes to use for the Swagger UI authentication.
+        Defaults to ['openid', 'profile'].
+    :type swagger_auth_scopes: typing.List[str], optional
+    :param swagger_auth_pkce: Whether to use PKCE with the Swagger UI authentication.
+        Defaults to True.
+    :type swagger_auth_pkce: bool, optional
+    :param swagger_scheme_name: Name of the OpenAPI security scheme. Defaults to
+        'keycloak-openid'.
+    :type swagger_scheme_name: str, optional
     """
 
     # Add middleware
@@ -94,3 +114,26 @@ def setup_keycloak_middleware(
             )
     else:
         log.debug("Skipping adding exception responses")
+
+    # Add OpenAPI schema
+    if add_swagger_auth:
+        suffix = "/.well-known/openid-configuration"
+        security_scheme = OpenIdConnect(
+            openIdConnectUrl=f"{keycloak_configuration.url}realms/{keycloak_configuration.realm}{suffix}",
+            scheme_name=swagger_scheme_name,
+            auto_error=False,
+        )
+        client_id = (
+            keycloak_configuration.swagger_client_id
+            if keycloak_configuration.swagger_client_id
+            else keycloak_configuration.client_id
+        )
+        scopes = swagger_auth_scopes if swagger_auth_scopes else ["openid", "profile"]
+        swagger_ui_init_oauth = {
+            "clientId": client_id,
+            "scopes": scopes,
+            "appName": app.title,
+            "usePkceWithAuthorizationCodeGrant": swagger_auth_pkce,
+        }
+        app.swagger_ui_init_oauth = swagger_ui_init_oauth
+        app.router.dependencies.append(Depends(security_scheme))
