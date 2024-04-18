@@ -11,7 +11,7 @@ This is a very basic example on how to add the Middleware to a FastAPI applicati
 .. code-block:: python
 
    from fastapi import FastAPI
-   from fastapi_keycloak_middleware import KeycloakConfiguration, KeycloakMiddleware
+   from fastapi_keycloak_middleware import KeycloakConfiguration, setup_keycloak_middleware
 
    # Set up Keycloak
     keycloak_config = KeycloakConfiguration(
@@ -24,8 +24,8 @@ This is a very basic example on how to add the Middleware to a FastAPI applicati
     app = FastAPI()
 
     # Add middleware with basic config
-    app.add_middleware(
-        KeycloakMiddleware,
+    setup_keycloak_middleware(
+        app,
         keycloak_configuration=keycloak_config,
     )
 
@@ -46,6 +46,7 @@ This is a minimal example of using the middleware and will already perform the f
    * :code:`preferred_username` - part of the :code:`profile` scope, defining the user's preferred username. Note that as per openid specifications, you must not rely on this claim to be unique for all users
    * :code:`email` - part of the :code:`email` scope, defining the user's email address
 * Get the user object based on the extracted information. As no custom callback function is provided, it will return an instance of :code:`FastApiUser` containing extracted information.
+* Add proper 401 and 403 responses to the OpenAPI schema
 
 .. note::
    **Authorization** is disabled by default, so no authorization scopes will be stored.
@@ -89,8 +90,8 @@ In many cases, you'll have your own user model you want to work with and therefo
        return User()
 
     # Add middleware with basic config
-    app.add_middleware(
-        KeycloakMiddleware,
+    setup_keycloak_middleware(
+        app,
         keycloak_configuration=keycloak_config,
         user_mapper=map_user,
     )
@@ -198,7 +199,7 @@ attribute, which must be the True or False bool or the str path to the CA bundle
 .. code-block:: python
 
     from fastapi import FastAPI
-    from fastapi_keycloak_middleware import KeycloakConfiguration, KeycloakMiddleware
+    from fastapi_keycloak_middleware import KeycloakConfiguration, setup_keycloak_middleware
 
     # Set up Keycloak connection
     keycloak_config = KeycloakConfiguration(
@@ -243,8 +244,8 @@ attribute, which must be the True or False bool or the str path to the CA bundle
     app = FastAPI()
 
     # Add middleware with basic config
-    app.add_middleware(
-        KeycloakMiddleware,
+    setup_keycloak_middleware(
+        app,
         keycloak_configuration=keycloak_config,
         user_mapper=map_user,
     )
