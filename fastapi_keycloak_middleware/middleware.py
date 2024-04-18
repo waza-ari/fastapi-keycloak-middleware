@@ -9,10 +9,9 @@ import logging
 import re
 import typing
 
-from fastapi import FastAPI
 from starlette.requests import HTTPConnection
 from starlette.responses import JSONResponse
-from starlette.types import Receive, Scope, Send
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 from fastapi_keycloak_middleware.exceptions import (
     AuthHeaderMissing,
@@ -62,7 +61,7 @@ class KeycloakMiddleware:
 
     def __init__(
         self,
-        app: FastAPI,
+        app: ASGIApp,
         keycloak_configuration: KeycloakConfiguration,
         exclude_patterns: typing.List[str] = None,
         user_mapper: typing.Callable[
