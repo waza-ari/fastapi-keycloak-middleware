@@ -201,7 +201,7 @@ Also, it is recommended to setup a separate Keycloak client for this purpose, as
 separate client is then configured using the :code:`swagger_client_id`  parameter of :code:`KeycloakConfiguration`.
 
 .. code-block:: python
-   :emphasize-lines: 6,7,8,9,18
+   :emphasize-lines: 6,7,8,9,15
 
     keycloak_config = KeycloakConfiguration(
         url="https://sso.your-keycloak.com/auth/",
