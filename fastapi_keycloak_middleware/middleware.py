@@ -56,7 +56,8 @@ class KeycloakMiddleware:
     :param scope_mapper: Custom async function that transforms the claim values
         extracted from the token to permissions meaningful for your application,
         defaults to None
-    :type scope_mapper: typing.Callable[[typing.List[str]], typing.List[str]], optional
+    :type scope_mapper:
+    typing.Callable[[typing.List[str]], typing.Awaitable[typing.List[str]]], optional
     """
 
     def __init__(
@@ -67,7 +68,9 @@ class KeycloakMiddleware:
         user_mapper: typing.Callable[
             [typing.Dict[str, typing.Any]], typing.Awaitable[typing.Any]
         ] = None,
-        scope_mapper: typing.Callable[[typing.List[str]], typing.List[str]] = None,
+        scope_mapper: typing.Callable[
+            [typing.List[str]], typing.Awaitable[typing.List[str]]
+        ] = None,
     ):
         """Middleware constructor"""
         log.info("Initializing Keycloak Middleware")
