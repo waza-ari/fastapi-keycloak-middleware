@@ -20,9 +20,9 @@ import fastapi_keycloak_middleware  # noqa: F401,E402
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "FastAPI Keycloak Middleware"
-copyright = "2023, Daniel Herrmann"
+copyright = "2024, Daniel Herrmann"
 author = "Daniel Herrmann"
-release = "0.4.0"
+release = "0.4.1"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
