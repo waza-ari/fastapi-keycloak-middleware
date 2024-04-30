@@ -2,7 +2,7 @@
 This module contains the schema to configure Keycloak.
 """
 
-from typing import Dict, Optional, Union
+from typing import Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -13,7 +13,7 @@ from fastapi_keycloak_middleware.schemas.authorization_methods import (
 
 class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-methods
     """
-    This is a Pydantic schema used to pass backend konfiguration
+    This is a Pydantic schema used to pass backend configuration
     for the Keycloak Backend to the middleware.
 
     :param realm: Keycloak realm that should be used for token authentication.
@@ -131,7 +131,7 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
         title="Verify",
         description="Whether to verify the SSL connection",
     )
-    decode_options: Dict[str, Union[bool, int]] = Field(
+    decode_options: dict[str, Union[bool, int]] = Field(
         default={
             "verify_signature": True,
             "verify_aud": True,

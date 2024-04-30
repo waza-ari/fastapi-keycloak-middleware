@@ -57,7 +57,7 @@ class KeycloakMiddleware:
         extracted from the token to permissions meaningful for your application,
         defaults to None
     :type scope_mapper:
-    typing.Callable[[typing.List[str]], typing.Awaitable[typing.List[str]]], optional
+        typing.Callable[[typing.List[str]], typing.Awaitable[typing.List[str]]], optional
     """
 
     def __init__(
@@ -211,6 +211,4 @@ class KeycloakMiddleware:
         """
         Returns a response notifying the user that the acess token is invalid.
         """
-        return JSONResponse(
-            {"detail": "Unable to verify provided access token"}, status_code=401
-        )
+        return JSONResponse({"detail": "Unable to verify provided access token"}, status_code=401)

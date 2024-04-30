@@ -8,20 +8,15 @@ repos:
       - id: debug-statements
       - id: end-of-file-fixer
       - id: trailing-whitespace
-  - repo: https://github.com/PyCQA/isort
-    rev: 5.13.2
-    hooks:
-      - id: isort
-  - repo: https://github.com/psf/black
-    rev: 24.4.0
-    hooks:
-      - id: black
   - repo: https://github.com/asottile/pyupgrade
     rev: v3.15.2
     hooks:
       - id: pyupgrade
         args: [--py37-plus, --keep-percent-format]
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.4.1"
+    rev: "v0.4.2"
     hooks:
+      # Run the linter.
       - id: ruff
+      # Run the formatter.
+      - id: ruff-format

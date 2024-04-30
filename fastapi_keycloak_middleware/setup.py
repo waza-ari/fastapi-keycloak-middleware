@@ -27,9 +27,7 @@ def setup_keycloak_middleware(  # pylint: disable=too-many-arguments
     user_mapper: typing.Callable[
         [typing.Dict[str, typing.Any]], typing.Awaitable[typing.Any]
     ] = None,
-    scope_mapper: typing.Callable[
-        [typing.List[str]], typing.Awaitable[typing.List[str]]
-    ] = None,
+    scope_mapper: typing.Callable[[typing.List[str]], typing.Awaitable[typing.List[str]]] = None,
     add_exception_response: bool = True,
     add_swagger_auth: bool = False,
     swagger_auth_scopes: typing.List[str] = None,
@@ -99,8 +97,7 @@ def setup_keycloak_middleware(  # pylint: disable=too-many-arguments
             }
         else:
             log.warning(
-                "Middleware is configured to add 401 exception"
-                " response but it already exists"
+                "Middleware is configured to add 401 exception" " response but it already exists"
             )
 
         if 403 not in router.responses:
@@ -111,8 +108,7 @@ def setup_keycloak_middleware(  # pylint: disable=too-many-arguments
             }
         else:
             log.warning(
-                "Middleware is configured to add 403 exception"
-                " response but it already exists"
+                "Middleware is configured to add 403 exception" " response but it already exists"
             )
     else:
         log.debug("Skipping adding exception responses")

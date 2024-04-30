@@ -72,6 +72,21 @@ This package is heavily inspired by [fastapi-auth-middleware](https://github.com
 which provides some of the same functionality but without the direct integration
 into Keycloak. Thanks for writing and providing this great piece of software!
 
+## Contributing
+
+The client is written in pure Python.
+Any changes or pull requests are more than welcome, but please adhere to the code style.
+
+Ruff is used both for code formatting and linting. Before committing, please run the following command to ensure
+that your code is properly formatted:
+
+```bash
+ruff check .
+ruff format .
+```
+
+A pre-commit hook configuration is supplied as part of the project.
+
 ## Development
 
 This project is using [Act](https://github.com/nektos/act) to handle local development tasks. It is used

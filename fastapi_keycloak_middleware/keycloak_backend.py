@@ -6,7 +6,6 @@ It is used by the middleware to perform the actual authentication.
 
 import logging
 import typing
-from typing import Tuple
 
 import keycloak
 from jose import ExpiredSignatureError, JWTError
@@ -42,9 +41,7 @@ class KeycloakBackend(AuthenticationBackend):
     def __init__(
         self,
         keycloak_configuration: KeycloakConfiguration,
-        user_mapper: typing.Callable[
-            [typing.Dict[str, typing.Any]], typing.Awaitable[typing.Any]
-        ],
+        user_mapper: typing.Callable[[typing.Dict[str, typing.Any]], typing.Awaitable[typing.Any]],
     ):
         self.keycloak_configuration = keycloak_configuration
         self.keycloak_openid = self._get_keycloak_openid(keycloak_configuration)
@@ -58,9 +55,7 @@ class KeycloakBackend(AuthenticationBackend):
                 + "\n-----END PUBLIC KEY-----"
             )
 
-    def _get_keycloak_openid(
-        self, keycloak_configuration: KeycloakConfiguration
-    ) -> KeycloakOpenID:
+    def _get_keycloak_openid(self, keycloak_configuration: KeycloakConfiguration) -> KeycloakOpenID:
         """
         Instance-scoped KeycloakOpenID object
         """
@@ -82,9 +77,7 @@ class KeycloakBackend(AuthenticationBackend):
             user_id=userinfo.get("user_id", ""),
         )
 
-    async def authenticate(
-        self, conn: HTTPConnection
-    ) -> Tuple[AuthCredentials, BaseUser]:
+    async def authenticate(self, conn: HTTPConnection) -> tuple[AuthCredentials, BaseUser | None]:
         """
         The authenticate method is invoked each time a route is called that
         the middleware is applied to.
@@ -95,10 +88,7 @@ class KeycloakBackend(AuthenticationBackend):
         # Check if token starts with the authentication scheme
         auth_header = conn.headers["Authorization"]
         token = auth_header.split(" ")
-        if (
-            len(token) != 2
-            or token[0] != self.keycloak_configuration.authentication_scheme
-        ):
+        if len(token) != 2 or token[0] != self.keycloak_configuration.authentication_scheme:
             raise AuthInvalidToken
 
         token_info = None
@@ -139,10 +129,7 @@ class KeycloakBackend(AuthenticationBackend):
             # ...only add the device auth claim to the claims to extract
             claims = [self.keycloak_configuration.device_authentication_claim]
             # If claim based authorization is enabled...
-            if (
-                self.keycloak_configuration.authorization_method
-                == AuthorizationMethod.CLAIM
-            ):
+            if self.keycloak_configuration.authorization_method == AuthorizationMethod.CLAIM:
                 # ...add the authorization claim to the claims to extract
                 claims.append(self.keycloak_configuration.authorization_claim)
 
@@ -156,16 +143,11 @@ class KeycloakBackend(AuthenticationBackend):
                 if self.keycloak_configuration.reject_on_missing_claim:
                     log.warning("Rejecting request because of missing claim")
                     raise AuthClaimMissing from KeyError
-                log.debug(
-                    "Backend is configured to ignore missing claims, continuing..."
-                )
+                log.debug("Backend is configured to ignore missing claims, continuing...")
 
         # Handle Authorization depending on the Claim Method
-        scope_auth = []
-        if (
-            self.keycloak_configuration.authorization_method
-            == AuthorizationMethod.CLAIM
-        ):
+        scope_auth = None
+        if self.keycloak_configuration.authorization_method == AuthorizationMethod.CLAIM:
             if self.keycloak_configuration.authorization_claim not in token_info:
                 raise AuthClaimMissing
             scope_auth = token_info[self.keycloak_configuration.authorization_claim]

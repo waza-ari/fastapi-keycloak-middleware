@@ -10,9 +10,9 @@ permission.
 import logging
 import typing
 from collections import OrderedDict
+from collections.abc import Callable
 from functools import wraps
 from inspect import Parameter, signature
-from typing import Callable
 
 import starlette
 from fastapi import HTTPException
@@ -51,9 +51,7 @@ def require_permission(
 
     # Check if match_strategy is valid
     if match_strategy not in MatchStrategy:
-        raise ValueError(
-            "Invalid match strategy. Must be 'and' or 'or'. Got %s" % match_strategy
-        )
+        raise ValueError(f"Invalid match strategy. Must be 'and' or 'or'. Got {match_strategy}")
 
     def _check_permission(
         requested_permission: typing.List[str], allowed_scopes: typing.List[str]
@@ -63,9 +61,7 @@ def require_permission(
         """
         # Get matching permissions
         matching_permissions = [
-            permission
-            for permission in requested_permission
-            if permission in allowed_scopes
+            permission for permission in requested_permission if permission in allowed_scopes
         ]
 
         if match_strategy == MatchStrategy.AND:
@@ -92,18 +88,16 @@ def require_permission(
 
             user = request.get("user", None)
 
-            log.debug("Checking permission %s for user %s" % (permissions, str(user)))
+            log.debug(f"Checking permission {permissions} for user {str(user)}")
 
             allowed_scopes = request.get("auth", [])
 
             # Check if user has permission
-            allowed, matching_permissions = _check_permission(
-                permissions, allowed_scopes
-            )
+            allowed, matching_permissions = _check_permission(permissions, allowed_scopes)
 
             if allowed:
-                log.info("Permission granted for user %s" % (str(user)))
-                log.debug("Matching permissions: %s" % (matching_permissions))
+                log.info(f"Permission granted for user {str(user)}")
+                log.debug(f"Matching permissions: {matching_permissions}")
 
                 # Check if "matched_scopes" is in function signature.
                 # If so, add it to the function call.
@@ -116,7 +110,7 @@ def require_permission(
 
                 return await func(*args, **kwargs)
 
-            log.warning("Permission %s denied for user %s" % (permissions, str(user)))
+            log.warning(f"Permission {permissions} denied for user {str(user)}")
             raise HTTPException(status_code=403, detail="Permission denied")
 
         # Override signature
@@ -136,9 +130,7 @@ def require_permission(
             ),
             *parameters.values(),
         ]
-        new_sig = sig.replace(
-            parameters=parameters, return_annotation=sig.return_annotation
-        )
+        new_sig = sig.replace(parameters=parameters, return_annotation=sig.return_annotation)
         wrapper.__signature__ = new_sig
         return wrapper
 
