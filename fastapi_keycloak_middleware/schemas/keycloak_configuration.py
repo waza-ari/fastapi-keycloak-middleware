@@ -70,7 +70,7 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
     url: str = Field(title="URL", description="The URL of the Keycloak server.")
     client_id: str = Field(title="Client ID", description="The client ID.")
     swagger_client_id: Optional[str] = Field(
-        title="Swagger Client ID", description="The client ID for the swagger UI."
+        default=None, title="Swagger Client ID", description="The client ID for the swagger UI."
     )
     client_secret: Optional[str] = Field(
         default=None, title="Client Secret", description="The client secret."
