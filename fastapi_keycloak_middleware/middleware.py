@@ -80,6 +80,7 @@ class KeycloakMiddleware:
             user_mapper=user_mapper,
         )
         self.scope_mapper = scope_mapper
+        self.inspect_websockets = keycloak_configuration.enable_websocket_support
         log.debug("Keycloak Middleware initialized")
 
         # Try to compile patterns
@@ -108,10 +109,11 @@ class KeycloakMiddleware:
     async def __call__(self, scope: Scope, receive: Receive, send: Send):
         log.debug("Keycloak Middleware is handling request")
 
-        if scope["type"] not in [
-            "http",
-            "websocket",
-        ]:  # pragma nocover # Filter for relevant requests
+        supported_protocols = ["http"]
+        if self.inspect_websockets:
+            supported_protocols.append("websocket")
+
+        if scope["type"] not in supported_protocols:  # Filter for relevant requests
             log.debug("Skipping non-HTTP request")
             await self.app(scope, receive, send)  # pragma nocover # Bypass
             return

@@ -82,11 +82,23 @@ class KeycloakBackend(AuthenticationBackend):
         The authenticate method is invoked each time a route is called that
         the middleware is applied to.
         """
-        if "Authorization" not in conn.headers:
+
+        auth_header = None
+
+        # If this is a websocket connection, we can extract the token
+        # from the cookies
+        if (
+            self.keycloak_configuration.enable_websocket_support
+            and conn.headers.get("upgrade") == "websocket"
+        ):
+            auth_header = conn.cookies.get(self.keycloak_configuration.websocket_cookie_name, None)
+        else:
+            auth_header = conn.headers.get("Authorization", None)
+
+        if not auth_header:
             raise AuthHeaderMissing
 
         # Check if token starts with the authentication scheme
-        auth_header = conn.headers["Authorization"]
         token = auth_header.split(" ")
         if len(token) != 2 or token[0] != self.keycloak_configuration.authentication_scheme:
             raise AuthInvalidToken

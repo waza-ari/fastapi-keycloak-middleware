@@ -64,6 +64,11 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
         acceptable options:
         https://github.com/mpdavis/python-jose/blob/4b0701b46a8d00988afcc5168c2b3a1fd60d15d8/jose/jwt.py#L81
     :type decode_options: Dict[str, Union[bool,int]], optional
+    :param enable_websocket_support: Whether to enable WebSocket support. Defaults to ``True``.
+    :type enable_websocket_support: bool, optional
+    :param websocket_cookie_name: Name of the cookie that contains the access token.
+        Defaults to ``access_token``.
+    :type websocket_cookie_name: str, optional
     """
 
     realm: str = Field(title="Realm", description="The realm to use.")
@@ -139,4 +144,14 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
         },
         title="JWT Decode Options",
         description="Decode options that are passed to python-jose decode function.",
+    )
+    enable_websocket_support: bool = Field(
+        default=True,
+        title="Enable WebSocket Support",
+        description="if enabled, websocket connections are also checked for valid tokens.",
+    )
+    websocket_cookie_name: str = Field(
+        default="access_token",
+        title="WebSocket Cookie Name",
+        description="The name of the cookie that contains the access token.",
     )

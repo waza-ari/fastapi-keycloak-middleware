@@ -219,6 +219,15 @@ If the claim is not present in the access token, the library will behave as usua
 .. note::
     To add the claim to your token, you can either use a ``Hardcoded claim`` mapper or any other method you prefer.
 
+Websocket Support
+^^^^^^^^^^^^^^^^^
+
+We can also inspect websocket connection requests and validate the token using the same mechanisms. Websockets do not support the same headers, therefore we have to use cookies instead.
+Websocket support is enabled by default, but can be disabled by setting the :code:`enable_websocket_support` parameter to :code:`False`.
+
+If enabled, the initial websocket connection request will be validated, subsequent messages within the same socket won't be affected.
+The cookie is expected to be named :code:`access_token` and contain the JWT token prefixed with :code:`Bearer`.
+
 Request Injection
 ^^^^^^^^^^^^^^^^^
 
