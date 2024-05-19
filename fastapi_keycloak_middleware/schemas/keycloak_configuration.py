@@ -4,6 +4,7 @@ This module contains the schema to configure Keycloak.
 
 from typing import Optional, Union
 
+from jwcrypto import jwk
 from pydantic import BaseModel, Field
 
 from fastapi_keycloak_middleware.schemas.authorization_methods import (
@@ -63,6 +64,8 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
     :param validation_options: Decode options that are passed to `JWCrypto`'s JWT
         constructor. Defaults to ``{}``. See the following project for an overview of
         acceptable options: https://jwcrypto.readthedocs.io/en/latest/jwt.html
+    :type validation_options: dict[str, Union[str, dict[str, Union[None, str]], list[str]]],
+        optional
     :param enable_websocket_support: Whether to enable WebSocket support. Defaults to ``True``.
     :type enable_websocket_support: bool, optional
     :param websocket_cookie_name: Name of the cookie that contains the access token.
@@ -140,10 +143,13 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
         title="Validate Token",
         description="Whether to validate the token.",
     )
-    validation_options: dict[str, any] = Field(
+    validation_options: dict[
+        str, Union[str, dict[str, Union[None, str]], list[str]], jwk.JWK, jwk.JWKSet
+    ] = Field(
         default={},
         title="JWCrypto JWT Options",
         description="Decode options that are passed to jwcrypto's JWT constructor.",
+        skip_validation=True,
     )
     enable_websocket_support: bool = Field(
         default=True,
@@ -155,9 +161,3 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
         title="WebSocket Cookie Name",
         description="The name of the cookie that contains the access token.",
     )
-
-    # arbitrary_types_allowed in modelconfig
-    class Config:  # pylint: disable=too-few-public-methods
-        """Pydantic model configuration"""
-
-        arbitrary_types_allowed = True
