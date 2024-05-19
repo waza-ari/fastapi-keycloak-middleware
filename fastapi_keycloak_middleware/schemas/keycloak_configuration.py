@@ -144,7 +144,7 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
         description="Whether to validate the token.",
     )
     validation_options: dict[
-        str, Union[str, dict[str, Union[None, str]], list[str]], jwk.JWK, jwk.JWKSet
+        str, Union[str, dict[str, Union[None, str]], list[str], jwk.JWK, jwk.JWKSet]
     ] = Field(
         default={},
         title="JWCrypto JWT Options",
@@ -161,3 +161,8 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
         title="WebSocket Cookie Name",
         description="The name of the cookie that contains the access token.",
     )
+
+    class Config:
+        """Pydantic configuration"""
+
+        arbitrary_types_allowed = True
