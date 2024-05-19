@@ -58,12 +58,11 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
         To be specific, ``bool(value)`` must evaluate to ``True``.
     :param verify: Whether to verify SSL connection. Defaults to ``True``
     :type verify: Union[bool,str], optional
-    :param decode_options: Defines options to be passed to `python-jose`'s `decode``
-        function. Defaults to ``{"verify_signature": True, "verify_aud": True,
-        "verify_exp": True}``. See the following project for an overview of
-        acceptable options:
-        https://github.com/mpdavis/python-jose/blob/4b0701b46a8d00988afcc5168c2b3a1fd60d15d8/jose/jwt.py#L81
-    :type decode_options: Dict[str, Union[bool,int]], optional
+    :param validate_token: Whether to validate the token. Defaults to ``True``.
+    :type validate_token: bool, optional
+    :param validation_options: Decode options that are passed to `JWCrypto`'s JWT
+        constructor. Defaults to ``{}``. See the following project for an overview of
+        acceptable options: https://jwcrypto.readthedocs.io/en/latest/jwt.html
     :param enable_websocket_support: Whether to enable WebSocket support. Defaults to ``True``.
     :type enable_websocket_support: bool, optional
     :param websocket_cookie_name: Name of the cookie that contains the access token.
@@ -136,14 +135,15 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
         title="Verify",
         description="Whether to verify the SSL connection",
     )
-    decode_options: dict[str, Union[bool, int]] = Field(
-        default={
-            "verify_signature": True,
-            "verify_aud": True,
-            "verify_exp": True,
-        },
-        title="JWT Decode Options",
-        description="Decode options that are passed to python-jose decode function.",
+    validate_token: bool = Field(
+        default=True,
+        title="Validate Token",
+        description="Whether to validate the token.",
+    )
+    validation_options: dict[str, any] = Field(
+        default={},
+        title="JWCrypto JWT Options",
+        description="Decode options that are passed to jwcrypto's JWT constructor.",
     )
     enable_websocket_support: bool = Field(
         default=True,
@@ -155,3 +155,9 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
         title="WebSocket Cookie Name",
         description="The name of the cookie that contains the access token.",
     )
+
+    # arbitrary_types_allowed in modelconfig
+    class Config:  # pylint: disable=too-few-public-methods
+        """Pydantic model configuration"""
+
+        arbitrary_types_allowed = True

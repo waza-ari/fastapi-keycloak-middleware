@@ -15,12 +15,6 @@ class AuthInvalidToken(Exception):
     """
 
 
-class AuthTokenExpired(Exception):
-    """
-    Raised when the token is expired.
-    """
-
-
 class AuthKeycloakError(Exception):
     """
     Raised when there was a problem communicating with Keycloak

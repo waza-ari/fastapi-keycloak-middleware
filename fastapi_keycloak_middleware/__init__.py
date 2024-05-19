@@ -2,7 +2,7 @@
 Middleware for FastAPI that supports authenticating users against Keycloak
 """
 
-__version__ = "0.4.2"
+__version__ = "1.0.0"
 
 import logging
 

@@ -9,6 +9,7 @@ import logging
 import re
 import typing
 
+from jwcrypto.common import JWException
 from starlette.requests import HTTPConnection
 from starlette.responses import JSONResponse
 from starlette.types import ASGIApp, Receive, Scope, Send
@@ -16,7 +17,6 @@ from starlette.types import ASGIApp, Receive, Scope, Send
 from fastapi_keycloak_middleware.exceptions import (
     AuthHeaderMissing,
     AuthInvalidToken,
-    AuthTokenExpired,
     AuthUserError,
 )
 from fastapi_keycloak_middleware.keycloak_backend import KeycloakBackend
@@ -144,26 +144,36 @@ class KeycloakMiddleware:
             scope["auth"], scope["user"] = auth, user
 
         except AuthHeaderMissing:  # Request has no 'Authorization' HTTP Header
-            response = self._auth_header_missing()
+            response = JSONResponse(
+                {"detail": "Your request is missing an 'Authorization' HTTP header"},
+                status_code=401,
+            )
             log.warning("Request is missing an 'Authorization' HTTP header")
             await response(scope, receive, send)
             return
 
-        except AuthTokenExpired:  # Token has expired
-            response = self._token_has_expired()
-            log.warning("Provided token has expired")
-            await response(scope, receive, send)
-            return
-
         except AuthUserError:
-            response = self._user_not_found()
+            response = JSONResponse(
+                {"detail": "Could not find a user based on this token"}, status_code=401
+            )
             log.warning("Could not find a user based on the provided token")
             await response(scope, receive, send)
             return
 
         except AuthInvalidToken:
-            response = self._invalid_token()
+            response = JSONResponse(
+                {"detail": "Unable to verify provided access token"}, status_code=401
+            )
             log.warning("Provided access token could not be validated")
+            await response(scope, receive, send)
+            return
+
+        except JWException as exc:
+            response = JSONResponse(
+                {"detail": f"Error while validating access token: {exc}"},
+                status_code=401,
+            )
+            log.warning("An error occurred while validating the token")
             await response(scope, receive, send)
             return
 
@@ -173,44 +183,9 @@ class KeycloakMiddleware:
                 status_code=401,
             )
             log.error("An error occurred while authenticating the user")
+            log.exception(exc)
             await response(scope, receive, send)
             return
 
         log.debug("Sending request to next middleware")
         await self.app(scope, receive, send)  # Token is valid
-
-    @staticmethod
-    def _auth_header_missing(*args, **kwargs):  # pylint: disable=unused-argument
-        """
-        Returns a response notifying the user that the request
-        is missing an 'Authorization' HTTP header.
-        """
-        return JSONResponse(
-            {"detail": "Your request is missing an 'Authorization' HTTP header"},
-            status_code=401,
-        )
-
-    @staticmethod
-    def _token_has_expired(*args, **kwargs):  # pylint: disable=unused-argument
-        """
-        Returns a response notifying the user that the token has expired.
-        """
-        return JSONResponse(
-            {"detail": "Your 'Authorization' HTTP header is invalid"}, status_code=401
-        )
-
-    @staticmethod
-    def _user_not_found(*args, **kwargs):  # pylint: disable=unused-argument
-        """
-        Returns a response notifying the user that the user was not found.
-        """
-        return JSONResponse(
-            {"detail": "Could not find a user based on this token"}, status_code=401
-        )
-
-    @staticmethod
-    def _invalid_token(*args, **kwargs):  # pylint: disable=unused-argument
-        """
-        Returns a response notifying the user that the acess token is invalid.
-        """
-        return JSONResponse({"detail": "Unable to verify provided access token"}, status_code=401)
