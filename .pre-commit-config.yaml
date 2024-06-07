@@ -14,7 +14,7 @@ repos:
       - id: pyupgrade
         args: [--py37-plus, --keep-percent-format]
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.4.4"
+    rev: "v0.4.7"
     hooks:
       # Run the linter.
       - id: ruff
