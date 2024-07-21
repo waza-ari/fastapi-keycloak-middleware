@@ -5,7 +5,7 @@ This module contains the schema to configure Keycloak.
 from typing import Optional, Union
 
 from jwcrypto import jwk
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from fastapi_keycloak_middleware.schemas.authorization_methods import (
     AuthorizationMethod,
@@ -72,6 +72,8 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
         Defaults to ``access_token``.
     :type websocket_cookie_name: str, optional
     """
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     realm: str = Field(title="Realm", description="The realm to use.")
     url: str = Field(title="URL", description="The URL of the Keycloak server.")
@@ -149,7 +151,6 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
         default={},
         title="JWCrypto JWT Options",
         description="Decode options that are passed to jwcrypto's JWT constructor.",
-        skip_validation=True,
     )
     enable_websocket_support: bool = Field(
         default=True,
@@ -161,8 +162,3 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
         title="WebSocket Cookie Name",
         description="The name of the cookie that contains the access token.",
     )
-
-    class Config:
-        """Pydantic configuration"""
-
-        arbitrary_types_allowed = True
