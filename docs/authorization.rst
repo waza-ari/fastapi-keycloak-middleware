@@ -49,6 +49,7 @@ To enable authorization, simply pass the chosen method to the middleware initial
         realm="<Realm Name>",
         client_id="<Client ID>",
         client_secret="<Client Secret>",
+        authorization_method=AuthorizationMethod.CLAIM,
     )
 
     app = FastAPI()
@@ -57,7 +58,6 @@ To enable authorization, simply pass the chosen method to the middleware initial
         app,
         keycloak_configuration=keycloak_config,
         get_user=auth_get_user,
-        authorization_method=AuthorizationMethod.CLAIM,
     )
 
 Protect Endpoint
@@ -85,14 +85,18 @@ As of today, the authorization based on a claim is the only supported method. Th
 By default, the :code:`roles` claim will be checked to build the scope. You can configure this behavior:
 
 .. code-block:: python
-    :emphasize-lines: 6
+    :emphasize-lines: 4
+
+    keycloak_config = KeycloakConfiguration(
+        # ...
+        authorization_method=AuthorizationMethod.CLAIM,
+        authorization_claim="permissions"
+    )
 
     setup_keycloak_middleware(
         app,
         keycloak_configuration=keycloak_config,
         get_user=auth_get_user,
-        authorization_method=AuthorizationMethod.CLAIM,
-        authorization_claim="permissions"
     )
 
 In this example, the library would extract the scopes from the :code:`permissions` claim.
@@ -103,7 +107,7 @@ Permission Mapping
 In the examples above, the content of the claims is used unmodified. You can add a custom mapper to map the scopes to permissions. A common example for this is mapping **roles** to **permissions**. This is done by providing a mapper function:
 
 .. code-block:: python
-    :emphasize-lines: 23
+    :emphasize-lines: 29
 
     from fastapi import FastAPI
     from fastapi_keycloak_middleware import KeycloakConfiguration, AuthorizationMethod, setup_keycloak_middleware
@@ -124,12 +128,16 @@ In the examples above, the content of the claims is used unmodified. You can add
 
         return permissions
 
+    keycloak_config = KeycloakConfiguration(
+        # ...
+        authorization_method=AuthorizationMethod.CLAIM,
+    )
+
     setup_keycloak_middleware(
         app,
         keycloak_configuration=keycloak_config,
         get_user=auth_get_user,
         scope_mapper=scope_mapper,
-        authorization_method=AuthorizationMethod.CLAIM,
     )
 
 The result of this mapping function is then used to enforce the permissions.
