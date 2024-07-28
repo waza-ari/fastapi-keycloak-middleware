@@ -64,13 +64,11 @@ class KeycloakMiddleware:
         self,
         app: ASGIApp,
         keycloak_configuration: KeycloakConfiguration,
-        exclude_patterns: typing.List[str] = None,
-        user_mapper: typing.Callable[
-            [typing.Dict[str, typing.Any]], typing.Awaitable[typing.Any]
-        ] = None,
-        scope_mapper: typing.Callable[
-            [typing.List[str]], typing.Awaitable[typing.List[str]]
-        ] = None,
+        exclude_patterns: typing.List[str] | None = None,
+        user_mapper: typing.Callable[[typing.Dict[str, typing.Any]], typing.Awaitable[typing.Any]]
+        | None = None,
+        scope_mapper: typing.Callable[[typing.List[str]], typing.Awaitable[typing.List[str]]]
+        | None = None,
     ):
         """Middleware constructor"""
         log.info("Initializing Keycloak Middleware")

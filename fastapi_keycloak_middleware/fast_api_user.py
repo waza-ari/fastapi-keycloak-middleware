@@ -5,13 +5,15 @@ It is mainly used if the user does not provide a custom function to retrieve
 the user based on the token claims
 """
 
+import typing
+
 from starlette.authentication import BaseUser
 
 
 class FastApiUser(BaseUser):
     """Sample API User that gives basic functionality"""
 
-    def __init__(self, first_name: str, last_name: str, user_id: any):
+    def __init__(self, first_name: str, last_name: str, user_id: typing.Any):
         """
         FastAPIUser Constructor
         """

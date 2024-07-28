@@ -23,14 +23,14 @@ log = logging.getLogger(__name__)
 def setup_keycloak_middleware(  # pylint: disable=too-many-arguments
     app: FastAPI,
     keycloak_configuration: KeycloakConfiguration,
-    exclude_patterns: typing.List[str] = None,
-    user_mapper: typing.Callable[
-        [typing.Dict[str, typing.Any]], typing.Awaitable[typing.Any]
-    ] = None,
-    scope_mapper: typing.Callable[[typing.List[str]], typing.Awaitable[typing.List[str]]] = None,
+    exclude_patterns: typing.List[str] | None = None,
+    user_mapper: typing.Callable[[typing.Dict[str, typing.Any]], typing.Awaitable[typing.Any]]
+    | None = None,
+    scope_mapper: typing.Callable[[typing.List[str]], typing.Awaitable[typing.List[str]]]
+    | None = None,
     add_exception_response: bool = True,
     add_swagger_auth: bool = False,
-    swagger_auth_scopes: typing.List[str] = None,
+    swagger_auth_scopes: typing.List[str] | None = None,
     swagger_auth_pkce: bool = True,
     swagger_scheme_name: str = "keycloak-openid",
 ):
