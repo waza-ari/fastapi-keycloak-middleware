@@ -250,6 +250,9 @@ The cookie is expected to be named :code:`access_token` and contain the JWT toke
 Request Injection
 ^^^^^^^^^^^^^^^^^
 
+.. warning::
+   This section documents details about deprecated, decorator based permission checking and will be removed in the future.
+
 .. note::
    This section contains technical details about the implementation within the library and is not required to use the library. Feel free to skip it.
 

@@ -13,6 +13,7 @@ from collections import OrderedDict
 from collections.abc import Callable
 from functools import wraps
 from inspect import Parameter, signature
+from warnings import warn
 
 import starlette
 from fastapi import HTTPException
@@ -44,6 +45,13 @@ def require_permission(
     :type match_strategy: MatchStrategy, optional
     :return: The decorated function
     """
+
+    warn(
+        "The decorator method is deprecated and will be removed in the next major version. "
+        "Please transition to dependency based permission checking.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
 
     # Check if permissions is a single string, convert to list if so
     if isinstance(permissions, str):

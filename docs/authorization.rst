@@ -63,19 +63,19 @@ To enable authorization, simply pass the chosen method to the middleware initial
 Protect Endpoint
 """"""""""""""""
 
-Then, on the endpoint you want to protect, use the :code:`@require_permission` decorator:
+Then, on the endpoint you want to protect, add a dependency specifying which permission is required to access the resource:
 
 .. code-block:: python
 
-    from fastapi_keycloak_middleware import require_permission
+    from fastapi import Depends
+    from fastapi_keycloak_middleware import CheckPermissions
 
-    @app.get("/protected")
-    @require_permission("protected")
+    @app.get("/protected", dependencies=[Depends(CheckPermissions("protected"))])
     def protected():
         return {"message": "Hello World"}
 
 .. note::
-   The more experienced FastAPI users may notice that we're not passing the :code:`Request` parameter to the path function, even though the decorator requires this. If you're interested in how that works under the hood, check the :ref:`advanced_topics` section for a more in-depth explanation.
+   Previous versions of the library used the :code:`@require_permission` decorator. This has been deprecated in favor of the :code:`CheckPermissions` dependency, please update your code accordingly.
 
 Claim Authorization
 ^^^^^^^^^^^^^^^^^^^
@@ -145,27 +145,27 @@ The result of this mapping function is then used to enforce the permissions.
 Composite Authorization
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-You can build more complex authorization rules by combining multiple permissions. This is done by passing a list of permissions to the :code:`@require_permissions` decorator:
+You can build more complex authorization rules by combining multiple permissions. This is done by passing a list of permissions to the :code:`CheckPermissions` method:
 
 .. code-block:: python
     :emphasize-lines: 4
 
-    from fastapi_keycloak_middleware import require_permission
+    from fastapi import Depends
+    from fastapi_keycloak_middleware import CheckPermissions
 
-    @app.get("/view_user")
-    @require_permission(["user:view", "user:view_own"])
+    @app.get("/view_user", dependencies=[Depends(CheckPermissions(["user:view", "user:view_own"]))])
     def view_user():
         return {"userinfo": "Hello World"}
 
 By default, the decorator will now enforce that the user bas both permissions. You can change this behavior by passing the :code:`match_strategy` parameter:
 
 .. code-block:: python
-    :emphasize-lines: 1,4
+    :emphasize-lines: 2,4
 
-    from fastapi_keycloak_middleware import require_permission, MatchStrategy
+    from fastapi import Depends
+    from fastapi_keycloak_middleware import CheckPermissions, MatchStrategy
 
-    @app.get("/view_user")
-    @require_permission(["user:view", "user:view_own"], match_strategy=MatchStrategy.OR)
+    @app.get("/view_user", dependencies=[Depends()])
     def view_user():
         return {"userinfo": "Hello World"}
 
@@ -174,16 +174,20 @@ Now, it is sufficient for the user to have one of the mentioned permissions.
 Accessing the Authorization Result
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-You can access the result of the authorization evaluation by using a dependency provided:
+The method itself works like a regular FastAPI dependency and can be used either in the :code:`dependencies` parameter of the endpoint or as a parameter to the path function.
+When used as a parameter, the result of the authorization evaluation is passed to the function.
 
 .. code-block:: python
-    :emphasize-lines: 1,5
+    :emphasize-lines: 2,5
 
-    from fastapi_keycloak_middleware import AuthorizationResult, require_permission, MatchStrategy, get_authorization_result
+    from fastapi import Depends
+    from fastapi_keycloak_middleware import AuthorizationResult, CheckPermissions, MatchStrategy
 
     @app.get("/view_user")
-    @require_permission(["user:view", "user:view_own"], match_strategy=MatchStrategy.OR)
-    def view_user(authorization_result: AuthorizationResult = Depends(get_authorization_result),):
+    def view_user(authorization_result: AuthorizationResult = Depends(CheckPermissions(["user:view", "user:view_own"], match_strategy=MatchStrategy.OR))):
         return {"userinfo": "Hello World"}
 
 You can now access the permissions that actually matched and act based on this information. For example, if only the :code:`user:view_own` permission matched, you could check if the user requested matches the currently logged in user.
+
+.. note::
+   Note that previous versions of this library used a decorator to match permissions and therefore needed quite convoluted logic to make the result accessible. Using the :code:`@require_permission` decorator and therefore the :code:`get_authorization_result` dependency is deprecated and will be removed in future versions.

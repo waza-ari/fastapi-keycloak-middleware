@@ -28,6 +28,7 @@ services.
    usage
    authorization
    advanced_topics
+   testing
    api
 
 

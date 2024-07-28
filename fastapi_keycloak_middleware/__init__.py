@@ -8,6 +8,8 @@ import logging
 
 from fastapi_keycloak_middleware.decorators.require_permission import require_permission
 from fastapi_keycloak_middleware.decorators.strip_request import strip_request
+from fastapi_keycloak_middleware.dependencies.check_permission import CheckPermissions
+from fastapi_keycloak_middleware.dependencies.get_auth import get_auth
 from fastapi_keycloak_middleware.dependencies.get_authorization_result import (
     get_authorization_result,
 )
@@ -33,6 +35,8 @@ __all__ = [
     AuthorizationMethod.__name__,
     MatchStrategy.__name__,
     FastApiUser.__name__,
+    CheckPermissions.__name__,
+    get_auth.__name__,
     get_user.__name__,
     get_authorization_result.__name__,
     require_permission.__name__,
