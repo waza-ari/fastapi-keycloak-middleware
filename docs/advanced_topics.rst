@@ -157,7 +157,7 @@ Alternatively you can use multiple :code:`FastAPI` applications and mount them t
     secured_app = FastAPI()
 
     setup_keycloak_middleware(
-        app,
+        secured_app,
         # ...
         exclude_patterns=excluded_routes,
     )
