@@ -67,22 +67,22 @@ def setup_keycloak_middleware(  # pylint: disable=too-many-arguments
     :param add_swagger_auth: Whether to add OpenID Connect authentication to the OpenAPI
         schema. Defaults to False.
     :type add_swagger_auth: bool, optional
-    :param openId_base_url: Base URL for the OpenID Connect configuration that will be used 
-        by the Swagger UI. This parameter allows you to specify a different base URL than 
-        the one in keycloak_configuration.url. This is particularly useful in Docker 
+    :param openId_base_url: Base URL for the OpenID Connect configuration that will be used
+        by the Swagger UI. This parameter allows you to specify a different base URL than
+        the one in keycloak_configuration.url. This is particularly useful in Docker
         container scenarios where the internal and external URLs differ.
 
-        For example, inside a Docker container network, Keycloak's OpenID configuration 
+        For example, inside a Docker container network, Keycloak's OpenID configuration
         endpoint might be available at:
         http://host.docker.internal:8080/auth/realms/master/.well-known/openid-configuration
 
-        However, external clients like Swagger UI cannot resolve host.docker.internal. 
+        However, external clients like Swagger UI cannot resolve host.docker.internal.
         In this case, you would set:
         - keycloak_configuration.url = "http://host.docker.internal:8080" (for internal communication)
         - openId_base_url = "http://localhost:8080" (for Swagger UI access)
 
         If not specified, defaults to using keycloak_configuration.url.
-    :type openId_base_url: str, optional    
+    :type openId_base_url: str, optional
     :param swagger_auth_scopes: Scopes to use for the Swagger UI authentication.
         Defaults to ['openid', 'profile'].
     :type swagger_auth_scopes: typing.List[str], optional
