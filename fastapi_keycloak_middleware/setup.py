@@ -30,7 +30,7 @@ def setup_keycloak_middleware(  # pylint: disable=too-many-arguments
     | None = None,
     add_exception_response: bool = True,
     add_swagger_auth: bool = False,
-    openId_base_url: str | None = None,
+    swagger_openId_base_url: str | None = None,
     swagger_auth_scopes: typing.List[str] | None = None,
     swagger_auth_pkce: bool = True,
     swagger_scheme_name: str = "keycloak-openid",
@@ -67,7 +67,7 @@ def setup_keycloak_middleware(  # pylint: disable=too-many-arguments
     :param add_swagger_auth: Whether to add OpenID Connect authentication to the OpenAPI
         schema. Defaults to False.
     :type add_swagger_auth: bool, optional
-    :param openId_base_url: Base URL for the OpenID Connect configuration that will be used 
+    :param swagger_openId_base_url: Base URL for the OpenID Connect configuration that will be used 
         by the Swagger UI. This parameter allows you to specify a different base URL than 
         the one in keycloak_configuration.url. This is particularly useful in Docker 
         container scenarios where the internal and external URLs differ.
@@ -78,11 +78,13 @@ def setup_keycloak_middleware(  # pylint: disable=too-many-arguments
 
         However, external clients like Swagger UI cannot resolve host.docker.internal. 
         In this case, you would set:
-        - keycloak_configuration.url = "http://host.docker.internal:8080" (for internal communication)
-        - openId_base_url = "http://localhost:8080" (for Swagger UI access)
+        - keycloak_configuration.url: 
+        -- "http://host.docker.internal:8080" (for internal communication)
+        - swagger_openId_base_url: 
+        -- "http://localhost:8080" (for Swagger UI access)
 
         If not specified, defaults to using keycloak_configuration.url.
-    :type openId_base_url: str, optional    
+    :type swagger_openId_base_url: str, optional    
     :param swagger_auth_scopes: Scopes to use for the Swagger UI authentication.
         Defaults to ['openid', 'profile'].
     :type swagger_auth_scopes: typing.List[str], optional
@@ -132,9 +134,10 @@ def setup_keycloak_middleware(  # pylint: disable=too-many-arguments
 
     # Add OpenAPI schema
     if add_swagger_auth:
-        suffix = "/.well-known/openid-configuration"
+        suffix = ".well-known/openid-configuration"
+        openId_base_url = swagger_openId_base_url or keycloak_configuration.url
         security_scheme = OpenIdConnect(
-            openIdConnectUrl=f"{openId_base_url or keycloak_configuration.url}/realms/{keycloak_configuration.realm}{suffix}",
+            openIdConnectUrl=f"{openId_base_url}/realms/{keycloak_configuration.realm}/{suffix}",
             scheme_name=swagger_scheme_name,
             auto_error=False,
         )
