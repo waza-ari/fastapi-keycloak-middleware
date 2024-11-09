@@ -72,11 +72,11 @@ def setup_keycloak_middleware(  # pylint: disable=too-many-arguments
         the one in keycloak_configuration.url. This is particularly useful in Docker 
         container scenarios where the internal and external URLs differ.
 
-        For example, inside a Docker container network, Keycloak's OpenID configuration 
+        For example, inside a Docker container network, Keycloak's OpenID configuration
         endpoint might be available at:
         http://host.docker.internal:8080/auth/realms/master/.well-known/openid-configuration
 
-        However, external clients like Swagger UI cannot resolve host.docker.internal. 
+        However, external clients like Swagger UI cannot resolve host.docker.internal.
         In this case, you would set:
         - keycloak_configuration.url: 
         -- "http://host.docker.internal:8080" (for internal communication)
