@@ -98,13 +98,13 @@ class KeycloakBackend(AuthenticationBackend):
             log.debug("Using introspection endpoint to validate token")
             # Call introspect endpoint to check if token is valid
             try:
-                token_info = self.keycloak_openid.introspect(token[1])
+                token_info = await self.keycloak_openid.a_introspect(token[1])
             except keycloak.exceptions.KeycloakPostError as exc:
                 raise AuthKeycloakError from exc
         else:
             log.debug("Using keycloak public key to validate token")
             # Decode Token locally using the public key
-            token_info = self.keycloak_openid.decode_token(
+            token_info = await self.keycloak_openid.a_decode_token(
                 token[1],
                 self.keycloak_configuration.validate_token,
                 **self.keycloak_configuration.validation_options,
