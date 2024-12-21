@@ -9,7 +9,7 @@ packages = [{ include = "fastapi_keycloak_middleware" }]
 [tool.poetry.dependencies]
 python = "^3.10"
 fastapi = ">=0.73.0"
-python-keycloak = "^4.1.0"
+python-keycloak = "^4,>=4.1 || ^5"
 
 
 [tool.poetry.group.dev.dependencies]
