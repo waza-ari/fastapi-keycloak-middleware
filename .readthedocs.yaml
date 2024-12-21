@@ -11,9 +11,10 @@ build:
   tools:
     python: "3.13"
   jobs:
-    post_install:
+    post_create_environment:
       - pip install poetry==1.8.5
       - poetry config virtualenvs.create false
+    post_install:
       - poetry install --with dev
 
 # Build documentation in the docs/ directory with Sphinx
