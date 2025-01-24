@@ -116,7 +116,7 @@ def setup_keycloak_middleware(  # pylint: disable=too-many-arguments
             }
         else:
             log.warning(
-                "Middleware is configured to add 401 exception" " response but it already exists"
+                "Middleware is configured to add 401 exception response but it already exists"
             )
 
         if 403 not in router.responses:
@@ -127,7 +127,7 @@ def setup_keycloak_middleware(  # pylint: disable=too-many-arguments
             }
         else:
             log.warning(
-                "Middleware is configured to add 403 exception" " response but it already exists"
+                "Middleware is configured to add 403 exception response but it already exists"
             )
     else:
         log.debug("Skipping adding exception responses")
