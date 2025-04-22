@@ -71,6 +71,10 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
     :param websocket_cookie_name: Name of the cookie that contains the access token.
         Defaults to ``access_token``.
     :type websocket_cookie_name: str, optional
+    :param exclude_options_requests: Flag to exclude requests with the OPTIONS
+        method from authentication. It might be helpful in case of CORS preflight requests.
+        Default to False.
+    :type exclude_options_requests: bool, optional
     """
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
@@ -161,4 +165,9 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
         default="access_token",
         title="WebSocket Cookie Name",
         description="The name of the cookie that contains the access token.",
+    )
+    exclude_options_requests: bool = Field(
+        default=False,
+        title="Exlude OPTIONS requests flag",
+        description="Flag to exclude requests with the OPTIONS method from authentication.",
     )

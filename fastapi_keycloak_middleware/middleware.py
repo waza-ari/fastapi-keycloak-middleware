@@ -79,6 +79,7 @@ class KeycloakMiddleware:
         )
         self.scope_mapper = scope_mapper
         self.inspect_websockets = keycloak_configuration.enable_websocket_support
+        self.exclude_options_requests = keycloak_configuration.exclude_options_requests
         log.debug("Keycloak Middleware initialized")
 
         # Try to compile patterns
@@ -121,6 +122,11 @@ class KeycloakMiddleware:
         if await self._exclude_path(path):
             log.debug("Skipping authentication for excluded path %s", path)
             await self.app(scope, receive, send)
+            return
+
+        if self.exclude_options_requests and scope.get("method", "") == "OPTIONS":
+            log.debug("Skipping request with OPTIONS method")
+            await self.app(scope, receive, send)  # pragma nocover # Bypass
             return
 
         connection = HTTPConnection(scope)  # Scoped connection
