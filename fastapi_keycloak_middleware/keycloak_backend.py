@@ -60,7 +60,7 @@ class KeycloakBackend(AuthenticationBackend):
             verify=self.keycloak_configuration.verify,
         )
 
-    def _get_public_key(self) -> str:
+    def _get_public_key(self) -> jwk.JWK:
         """
         Returns the public key used to validate tokens.
         This is only used if the introspection endpoint is not used.
