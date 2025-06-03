@@ -51,6 +51,85 @@ This is a minimal example of using the middleware and will already perform the f
 .. note::
    **Authorization** is disabled by default, so no authorization scopes will be stored.
 
+Middleware Order
+^^^^^^^^^^^^^^^^
+
+When working with multiple middlewares in FastAPI, the order in which they are added is crucial. FastAPI processes middlewares using a "shell model" - the middleware that is added **last** will be the **first** to process incoming requests and the **last** to process outgoing responses.
+
+This means middlewares are processed in reverse order of how they were added:
+
+.. code-block:: python
+
+    app = FastAPI()
+    
+    # This middleware will run SECOND for requests
+    app.add_middleware(SomeMiddleware)
+    
+    # This middleware will run FIRST for requests  
+    app.add_middleware(AnotherMiddleware)
+
+**Common Issue with CORS**
+
+A frequent problem occurs when adding CORS middleware after the Keycloak authentication middleware:
+
+.. code-block:: python
+    :caption: ❌ Problematic order
+
+    app = FastAPI()
+    
+    # Adding CORS after auth first - THIS CAUSES ISSUES!
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    
+    # Add Keycloak middleware second
+    setup_keycloak_middleware(
+        app,
+        keycloak_configuration=keycloak_config,
+    )
+
+In this incorrect setup, the authentication middleware will process OPTIONS preflight requests
+(used by browsers for CORS checks) and return a 401 Unauthorized response because OPTIONS requests
+typically don't include authentication headers. This prevents the CORS middleware from properly
+handling the preflight request.
+
+**Correct Order**
+
+To fix this, add the CORS middleware **after** the authentication middleware, ensuring it processs OPTIONS requests first:
+
+.. code-block:: python
+    :caption: ✅ Correct order
+
+    app = FastAPI()
+    
+    # Add Keycloak middleware first
+    setup_keycloak_middleware(
+        app,
+        keycloak_configuration=keycloak_config,
+    )
+    
+    # Add CORS middleware last (so it runs first for requests)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
+With this correct order:
+
+1. CORS middleware processes the request first and handles OPTIONS preflight requests immediately
+2. For non-OPTIONS requests, the authentication middleware then validates the token
+3. Your endpoint handlers receive properly authenticated requests
+
+.. note::
+   This same principle applies to other middlewares like rate limiting, request logging, or custom middlewares. Always consider what should happen first in the request processing chain.
+
 Keycloak Configuration Scheme
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
