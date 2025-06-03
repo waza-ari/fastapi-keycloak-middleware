@@ -8,6 +8,7 @@ import logging
 import typing
 
 import keycloak
+from jwcrypto import jwk
 from keycloak import KeycloakOpenID
 from starlette.authentication import AuthenticationBackend, BaseUser
 from starlette.requests import HTTPConnection
@@ -43,6 +44,8 @@ class KeycloakBackend(AuthenticationBackend):
     ):
         self.keycloak_configuration = keycloak_configuration
         self.keycloak_openid = self._get_keycloak_openid()
+        if not self.keycloak_configuration.use_introspection_endpoint:
+            self.public_key = self._get_public_key()
         self.get_user = user_mapper if user_mapper else KeycloakBackend._get_user
 
     def _get_keycloak_openid(self) -> KeycloakOpenID:
@@ -56,6 +59,23 @@ class KeycloakBackend(AuthenticationBackend):
             client_secret_key=self.keycloak_configuration.client_secret,
             verify=self.keycloak_configuration.verify,
         )
+
+    def _get_public_key(self) -> str:
+        """
+        Returns the public key used to validate tokens.
+        This is only used if the introspection endpoint is not used.
+        """
+        log.debug("Fetching public key from Keycloak server at %s", self.keycloak_configuration.url)
+        try:
+            key = (
+                "-----BEGIN PUBLIC KEY-----\n"
+                + self.keycloak_openid.public_key()
+                + "\n-----END PUBLIC KEY-----"
+            )
+            return jwk.JWK.from_pem(key.encode("utf-8"))
+        except keycloak.exceptions.KeycloakGetError as exc:
+            log.error("Failed to fetch public key from Keycloak server: %s", exc.error_message)
+            raise AuthKeycloakError from exc
 
     @staticmethod
     async def _get_user(userinfo: typing.Dict[str, typing.Any]) -> BaseUser:
@@ -108,6 +128,7 @@ class KeycloakBackend(AuthenticationBackend):
                 token[1],
                 self.keycloak_configuration.validate_token,
                 **self.keycloak_configuration.validation_options,
+                key=self.public_key,
             )
 
         # Calculate claims to extract
