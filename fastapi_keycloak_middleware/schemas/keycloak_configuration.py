@@ -2,7 +2,7 @@
 This module contains the schema to configure Keycloak.
 """
 
-from typing import Optional, Union
+from typing import Union
 
 from jwcrypto import jwk
 from pydantic import BaseModel, ConfigDict, Field
@@ -78,10 +78,10 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
     realm: str = Field(title="Realm", description="The realm to use.")
     url: str = Field(title="URL", description="The URL of the Keycloak server.")
     client_id: str = Field(title="Client ID", description="The client ID.")
-    swagger_client_id: Optional[str] = Field(
+    swagger_client_id: str | None = Field(
         default=None, title="Swagger Client ID", description="The client ID for the swagger UI."
     )
-    client_secret: Optional[str] = Field(
+    client_secret: str | None = Field(
         default=None, title="Client Secret", description="The client secret."
     )
     claims: list[str] = Field(
