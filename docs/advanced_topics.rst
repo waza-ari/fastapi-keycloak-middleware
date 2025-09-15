@@ -90,7 +90,7 @@ possible to modify the decode options if needed.
     keycloak_config = KeycloakConfiguration(
         # ...
         validation_options={
-            check_claims = {
+            "check_claims": {
                 "jti": None,
                 "exp": None,
                 "iat": None,
