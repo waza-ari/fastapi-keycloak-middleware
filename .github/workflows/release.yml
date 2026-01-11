@@ -5,26 +5,22 @@ on:
       - "v*.*.*"
 jobs:
   build-test:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v6
       - name: Build and publish to pypi
-        uses: JRubics/poetry-publish@v1.16
+        uses: JRubics/poetry-publish@v2.1
         with:
           pypi_token: ${{ secrets.TEST_PYPI_TOKEN }}
           repository_name: "fastapi-keycloak-middleware"
           repository_url: "https://test.pypi.org/legacy/"
-          python_version: "3.10.3"
-          poetry_version: "==1.3.1"
   release:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     environment: production
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v6
       - name: Build and publish to pypi
-        uses: JRubics/poetry-publish@v1.16
+        uses: JRubics/poetry-publish@v2.1
         with:
           pypi_token: ${{ secrets.PYPI_TOKEN }}
           repository_name: "fastapi-keycloak-middleware"
-          python_version: "3.10.3"
-          poetry_version: "==1.3.1"
