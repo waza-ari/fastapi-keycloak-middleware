@@ -1,19 +1,20 @@
-[tool.poetry]
+[project]
 name = "fastapi-keycloak-middleware"
-version = "1.5.0"
+version = "1.6.0"
 description = "Middleware for FastAPI to authenticate a user against keycloak"
-authors = ["Daniel Herrmann <daniel.herrmann1@gmail.com>"]
+authors = [{ name = "Daniel Herrmann", email = "daniel.herrmann1@gmail.com" }]
 readme = "README.md"
+requires-python = ">=3.11,<4"
+dependencies = ["fastapi>=0.73.0", "python-keycloak>=4.1,!=7.0.0,<8"]
+
+[tool.poetry]
 packages = [{ include = "fastapi_keycloak_middleware" }]
 
-[tool.poetry.dependencies]
-python = ">=3.11,<4"
-fastapi = ">=0.73.0"
-python-keycloak = "^4,>=4.1 || ^5 || ^6 || ^7,>=7.0.1"
-
-
 [tool.poetry.group.dev.dependencies]
-sphinx = "^9"
+sphinx = [
+    { version = "^9,<9.1", markers = "python_version < '3.12'" },
+    { version = "^9", markers = "python_version >= '3.12'" },
+]
 sphinx-rtd-theme = "^3"
 ruff = "^0"
 ruff-lsp = "^0"
