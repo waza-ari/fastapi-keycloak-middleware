@@ -15,7 +15,7 @@ This is a very basic example on how to add the Middleware to a FastAPI applicati
 
    # Set up Keycloak
     keycloak_config = KeycloakConfiguration(
-        url="https://sso.your-keycloak.com/auth/",
+        url="https://sso.your-keycloak.com",
         realm="<Realm Name>",
         client_id="<Client ID>",
         client_secret="<Client Secret>",
@@ -145,7 +145,7 @@ The authentication scheme is essentially the prefix of the :code:`Authorization`
 
     # Set up Keycloak
     keycloak_config = KeycloakConfiguration(
-        url="https://sso.your-keycloak.com/auth/",
+        url="https://sso.your-keycloak.com",
         realm="<Realm Name>",
         client_id="<Client ID>",
         client_secret="<Client Secret>",
@@ -260,7 +260,7 @@ You can also configure the class to extract other / additional claims from the t
 
     # Set up Keycloak
     keycloak_config = KeycloakConfiguration(
-        url="https://sso.your-keycloak.com/auth/",
+        url="https://sso.your-keycloak.com",
         realm="<Realm Name>",
         client_id="<Client ID>",
         client_secret="<Client Secret>",
@@ -283,7 +283,7 @@ separate client is then configured using the :code:`swagger_client_id`  paramete
    :emphasize-lines: 6,7,8,9,15
 
     keycloak_config = KeycloakConfiguration(
-        url="https://sso.your-keycloak.com/auth/",
+        url="https://sso.your-keycloak.com",
         realm="<Realm Name>",
         client_id="<Client ID>",
         client_secret="<Client Secret>",
@@ -320,7 +320,7 @@ attribute, which must be the True or False bool or the str path to the CA bundle
 
     # Set up Keycloak connection
     keycloak_config = KeycloakConfiguration(
-        url="https://sso.your-keycloak.com/auth/",
+        url="https://sso.your-keycloak.com",
         realm="<Realm Name>",
         client_id="<Client ID>",
         client_secret="<Client Secret>",
