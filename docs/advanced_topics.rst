@@ -49,7 +49,7 @@ If you want to still use the token endpoint to validate the token, you can opt t
 
     # Set up Keycloak
     keycloak_config = KeycloakConfiguration(
-        url="https://sso.your-keycloak.com/auth/",
+        url="https://sso.your-keycloak.com",
         realm="<Realm Name>",
         client_id="<Client ID>",
         client_secret="<Client Secret>",
@@ -69,7 +69,7 @@ all security features of the library.
 
     # Set up Keycloak
     keycloak_config = KeycloakConfiguration(
-        url="https://sso.your-keycloak.com/auth/",
+        url="https://sso.your-keycloak.com",
         realm="<Realm Name>",
         client_id="<Client ID>",
         client_secret="<Client Secret>",
@@ -218,7 +218,7 @@ The following example shows the configurtion on the library side:
 
     # Set up Keycloak
     keycloak_config = KeycloakConfiguration(
-        url="https://sso.your-keycloak.com/auth/",
+        url="https://sso.your-keycloak.com",
         realm="<Realm Name>",
         client_id="<Client ID>",
         client_secret="<Client Secret>",
