@@ -45,7 +45,7 @@ To enable authorization, simply pass the chosen method to the middleware initial
 
     # Set up Keycloak
     keycloak_config = KeycloakConfiguration(
-        url="https://sso.your-keycloak.com/auth/",
+        url="https://sso.your-keycloak.com",
         realm="<Realm Name>",
         client_id="<Client ID>",
         client_secret="<Client Secret>",
