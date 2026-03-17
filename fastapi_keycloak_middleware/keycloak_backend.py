@@ -85,7 +85,7 @@ class KeycloakBackend(AuthenticationBackend):
         return FastApiUser(
             first_name=userinfo.get("given_name", ""),
             last_name=userinfo.get("family_name", ""),
-            user_id=userinfo.get("user_id", ""),
+            user_id=userinfo.get("sub", ""),
         )
 
     async def authenticate(self, conn: HTTPConnection) -> tuple[list[str], BaseUser | None]:
