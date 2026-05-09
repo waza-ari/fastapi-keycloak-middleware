@@ -137,7 +137,7 @@ def setup_keycloak_middleware(  # pylint: disable=too-many-arguments
         suffix = ".well-known/openid-configuration"
         openId_base_url = swagger_openId_base_url or keycloak_configuration.url
         security_scheme = OpenIdConnect(
-            openIdConnectUrl=f"{openId_base_url}/realms/{keycloak_configuration.realm}/{suffix}",
+            openIdConnectUrl=f"{openId_base_url.rstrip('/')}/realms/{keycloak_configuration.realm}/{suffix}",
             scheme_name=swagger_scheme_name,
             auto_error=False,
         )
