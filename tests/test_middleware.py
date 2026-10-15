@@ -1,4 +1,5 @@
 import pytest
+from keycloak.exceptions import KeycloakConnectionError
 from starlette.websockets import WebSocketDisconnect
 
 from fastapi_keycloak_middleware import AuthorizationMethod
@@ -55,12 +56,37 @@ def test_missing_header(make_client):
     response = make_client(TOKEN).get("/me")
     assert response.status_code == 401
     assert response.json() == {"detail": "Your request is missing an 'Authorization' HTTP header"}
+    assert response.headers["WWW-Authenticate"] == "Bearer"
 
 
 def test_wrong_scheme(make_client):
     response = make_client(TOKEN).get("/me", headers={"Authorization": "Token token"})
     assert response.status_code == 401
     assert response.json() == {"detail": "Unable to verify provided access token"}
+    assert response.headers["WWW-Authenticate"] == 'Bearer error="invalid_token"'
+
+
+def test_custom_scheme_challenge(make_client):
+    client = make_client(TOKEN, config={"authentication_scheme": "Token"})
+    response = client.get("/me", headers={"Authorization": "Token token"})
+    assert response.status_code == 200
+    response = client.get("/me", headers={"Authorization": "Bearer token"})
+    assert response.headers["WWW-Authenticate"] == 'Token error="invalid_token"'
+
+
+def test_inactive_token(make_client):
+    response = make_client({**TOKEN, "active": False}).get("/me", headers=AUTH_HEADER)
+    assert response.status_code == 401
+    assert response.json() == {"detail": "Unable to verify provided access token"}
+
+
+def test_keycloak_unreachable(make_client):
+    response = make_client(KeycloakConnectionError("connection refused")).get(
+        "/me", headers=AUTH_HEADER
+    )
+    assert response.status_code == 503
+    assert response.json() == {"detail": "Unable to reach the identity provider"}
+    assert "WWW-Authenticate" not in response.headers
 
 
 def test_excluded_path(make_client):
@@ -119,6 +145,8 @@ def test_missing_claim(make_client):
     token = {key: value for key, value in TOKEN.items() if key != "sub"}
     response = make_client(token).get("/me", headers=AUTH_HEADER)
     assert response.status_code == 401
+    assert response.json() == {"detail": "The access token is missing the claim 'sub'"}
+    assert response.headers["WWW-Authenticate"] == 'Bearer error="invalid_token"'
 
 
 def test_service_principal(make_service_client):

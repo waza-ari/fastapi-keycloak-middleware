@@ -17,8 +17,10 @@ from starlette.responses import JSONResponse
 from starlette.types import ASGIApp, Receive, Scope, Send
 
 from fastapi_keycloak_middleware.exceptions import (
+    AuthClaimMissing,
     AuthHeaderMissing,
     AuthInvalidToken,
+    AuthKeycloakError,
     AuthServiceError,
     AuthUserError,
 )
@@ -104,6 +106,7 @@ class KeycloakMiddleware:
         )
         self.scope_mapper = scope_mapper
         self.inspect_websockets = keycloak_configuration.enable_websocket_support
+        self.authentication_scheme = keycloak_configuration.authentication_scheme
         log.debug("Keycloak Middleware initialized")
 
         # Try to compile patterns
@@ -171,56 +174,64 @@ class KeycloakMiddleware:
             scope["auth_context"] = auth_context
 
         except AuthHeaderMissing:  # Request has no 'Authorization' HTTP Header
-            response = JSONResponse(
-                {"detail": "Your request is missing an 'Authorization' HTTP header"},
-                status_code=401,
-            )
             log.warning("Request is missing an 'Authorization' HTTP header")
-            await response(scope, receive, send)
-            return
+            # As per RFC 6750, no error code is included if no credentials were sent
+            response = self._unauthorized(
+                "Your request is missing an 'Authorization' HTTP header", error=None
+            )
 
         except AuthUserError:
-            response = JSONResponse(
-                {"detail": "Could not find a user based on this token"}, status_code=401
-            )
             log.warning("Could not find a user based on the provided token")
-            await response(scope, receive, send)
-            return
+            response = self._unauthorized("Could not find a user based on this token")
 
         except AuthServiceError:
-            response = JSONResponse(
-                {"detail": "Could not find a service based on this token"}, status_code=401
-            )
             log.warning("Could not find a service based on the provided token")
-            await response(scope, receive, send)
-            return
+            response = self._unauthorized("Could not find a service based on this token")
 
         except AuthInvalidToken:
-            response = JSONResponse(
-                {"detail": "Unable to verify provided access token"}, status_code=401
-            )
             log.warning("Provided access token could not be validated")
-            await response(scope, receive, send)
-            return
+            response = self._unauthorized("Unable to verify provided access token")
+
+        except AuthClaimMissing as exc:
+            log.warning("Provided access token is missing a required claim")
+            response = self._unauthorized(f"The access token is missing the claim '{exc}'")
+
+        except AuthKeycloakError:
+            log.error("Unable to reach Keycloak to validate the token")
+            response = JSONResponse(
+                {"detail": "Unable to reach the identity provider"}, status_code=503
+            )
 
         except JWException as exc:
-            response = JSONResponse(
-                {"detail": f"Error while validating access token: {exc}"},
-                status_code=401,
-            )
             log.warning("An error occurred while validating the token")
-            await response(scope, receive, send)
-            return
+            response = self._unauthorized(f"Error while validating access token: {exc}")
 
         except Exception as exc:  # pylint: disable=broad-except
-            response = JSONResponse(
-                {"detail": f"An error occurred: {exc.__class__.__name__}"},
-                status_code=401,
-            )
             log.error("An error occurred while authenticating the request")
             log.exception(exc)
-            await response(scope, receive, send)
+            response = self._unauthorized(f"An error occurred: {exc.__class__.__name__}")
+
+        else:
+            log.debug("Sending request to next middleware")
+            await self.app(scope, receive, send)  # Token is valid
             return
 
-        log.debug("Sending request to next middleware")
-        await self.app(scope, receive, send)  # Token is valid
+        await response(scope, receive, send)
+
+    def _unauthorized(self, detail: str, error: str | None = "invalid_token") -> JSONResponse:
+        """
+        Builds a 401 response including the ``WWW-Authenticate`` challenge (RFC 6750)
+
+        :param detail: Message returned in the response body
+        :type detail: str
+        :param error: Error code added to the challenge, defaults to ``invalid_token``
+        :type error: str | None, optional
+        :return: The response
+        :rtype: JSONResponse
+        """
+        challenge = self.authentication_scheme
+        if error:
+            challenge += f' error="{error}"'
+        return JSONResponse(
+            {"detail": detail}, status_code=401, headers={"WWW-Authenticate": challenge}
+        )
