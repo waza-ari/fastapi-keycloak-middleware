@@ -29,13 +29,11 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
     :param client_secret: Client secret of the client used to validate the token.
         The client secret is only needed if you use the introspection endpoint.
     :type client_secret: str, optional
-    :param claims: List of claims that should be extracted from the access token.
-        Nested claims can be referenced with a dot separated path. Defaults to
-        ``["sub", "name", "family_name", "given_name", "preferred_username", "email"]``.
-    :type claims: list[str], optional
-    :param reject_on_missing_claim: Whether to reject the request if a claim is missing.
-        Defaults to ``True``.
-    :type reject_on_missing_claim: bool, optional
+    :param required_claims: Claims that must be present in every access token, otherwise
+        the request is rejected. Nested claims can be referenced with a dot separated
+        path. The user and service mappers always receive all claims of the token.
+        Defaults to ``["sub"]``.
+    :type required_claims: list[str], optional
     :param authentication_scheme: Authentication scheme to use. Defaults to ``Bearer``.
     :type authentication_scheme: str, optional
     :param authorization_method: Authorization method to use. Defaults to ``NONE``.
@@ -49,16 +47,6 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
         for token validation. Should not be needed for Keycloak in general
         as Keycloak doesn't support opaque tokens. Defaults to ``False``.
     :type use_introspection_endpoint: bool, optional
-    :param enable_device_authentication: Whether to enable device authentication.
-        If device authentication is enabled, the middleware will ignore required user
-        claims and not attempt to map the user. The token will be validated and then the
-        request forwarded unmodified. Defaults to ``False``.
-    :type enable_device_authentication: bool, optional
-    :param device_authentication_claim: This claim will be used to check if the token
-        is a device token. Defaults to ``is_device``. This is only used if
-        ``enable_device_authentication`` is set to ``True``. The value
-        is extracted from the claim and checked if its a truthy value.
-        To be specific, ``bool(value)`` must evaluate to ``True``.
     :param verify: Whether to verify SSL connection. Defaults to ``True``
     :type verify: Union[bool,str], optional
     :param validate_token: Whether to validate the token. Defaults to ``True``.
@@ -75,7 +63,9 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
     :type websocket_cookie_name: str, optional
     """
 
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    # Unknown options are rejected, so options removed in a major release are not
+    # silently ignored
+    model_config = ConfigDict(arbitrary_types_allowed=True, extra="forbid")
 
     realm: str = Field(title="Realm", description="The realm to use.")
     url: str = Field(title="URL", description="The URL of the Keycloak server.")
@@ -86,22 +76,10 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
     client_secret: str | None = Field(
         default=None, title="Client Secret", description="The client secret."
     )
-    claims: list[str] = Field(
-        default=[
-            "sub",
-            "name",
-            "family_name",
-            "given_name",
-            "preferred_username",
-            "email",
-        ],
-        title="Claims",
-        description="The claims to add to the user object.",
-    )
-    reject_on_missing_claim: bool = Field(
-        default=True,
-        title="Reject on Missing Claim",
-        description="Whether to reject the request if a claim is missing.",
+    required_claims: list[str] = Field(
+        default=["sub"],
+        title="Required Claims",
+        description="Claims that must be present in every access token.",
     )
     authentication_scheme: str = Field(
         default="Bearer",
@@ -122,20 +100,6 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
         default=False,
         title="Use Introspection Endpoint",
         description="Whether to use the introspection endpoint.",
-    )
-    enable_device_authentication: bool = Field(
-        default=False,
-        title="Enable Device Authentication",
-        description="Whether to enable device authentication. If device authentication"
-        " is enabled, the middleware will ignore required user claims and not attempt"
-        " to map the user. The token will be validated and then the request"
-        " forwarded unmodified.",
-    )
-    device_authentication_claim: str = Field(
-        default="is_device",
-        title="Device Authentication Claim",
-        description="The claim that will be checked. If present and if it evaluates to"
-        " true, the device authentication will be applied for the request.",
     )
     verify: Union[bool, str] = Field(
         default=True,

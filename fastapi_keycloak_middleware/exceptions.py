@@ -29,5 +29,11 @@ class AuthClaimMissing(Exception):
 
 class AuthUserError(Exception):
     """
-    Raised when there was a problem fetching the user object
+    Raised when the user mapper did not return a user object
+    """
+
+
+class AuthServiceError(Exception):
+    """
+    Raised when the service mapper did not return a service object
     """

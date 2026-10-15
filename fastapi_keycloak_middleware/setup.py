@@ -11,7 +11,8 @@ import typing
 from fastapi import Depends, FastAPI
 from fastapi.security import OpenIdConnect
 
-from fastapi_keycloak_middleware.middleware import KeycloakMiddleware
+from fastapi_keycloak_middleware.keycloak_backend import PrincipalMapper, ServiceDetector
+from fastapi_keycloak_middleware.middleware import KeycloakMiddleware, ScopeMapper
 from fastapi_keycloak_middleware.schemas.exception_response import ExceptionResponse
 from fastapi_keycloak_middleware.schemas.keycloak_configuration import (
     KeycloakConfiguration,
@@ -24,10 +25,10 @@ def setup_keycloak_middleware(  # pylint: disable=too-many-arguments
     app: FastAPI,
     keycloak_configuration: KeycloakConfiguration,
     exclude_patterns: typing.List[str] | None = None,
-    user_mapper: typing.Callable[[typing.Dict[str, typing.Any]], typing.Awaitable[typing.Any]]
-    | None = None,
-    scope_mapper: typing.Callable[[typing.List[str]], typing.Awaitable[typing.List[str]]]
-    | None = None,
+    user_mapper: PrincipalMapper | None = None,
+    service_mapper: PrincipalMapper | None = None,
+    service_detector: ServiceDetector | None = None,
+    scope_mapper: ScopeMapper | None = None,
     add_exception_response: bool = True,
     add_swagger_auth: bool = False,
     swagger_openId_base_url: str | None = None,
@@ -51,16 +52,26 @@ def setup_keycloak_middleware(  # pylint: disable=too-many-arguments
         and used to match the path. If the path matches, the middleware
         will skip authentication.
     :type exclude_patterns: typing.List[str], optional
-    :param user_mapper: Custom async function that gets the userinfo extracted from AT
-        and should return a representation of the user that is meaningful to you,
-        the user of this library, defaults to None
+    :param user_mapper: Custom async function that receives the claims of a user token
+        and returns a representation of the user that is meaningful to your application.
+        Returning ``None`` rejects the request. Defaults to returning a ``FastApiUser``.
     :type user_mapper:
-        typing.Callable[ [typing.Dict[str, typing.Any]], typing.Awaitable[typing.Any] ]
-        optional
+        typing.Callable[[typing.Dict[str, typing.Any]], typing.Awaitable[typing.Any]], optional
+    :param service_mapper: Custom async function that receives the claims of a service
+        token and returns a representation of the service that is meaningful to your
+        application. Returning ``None`` rejects the request. Defaults to returning a
+        ``ServicePrincipal``.
+    :type service_mapper:
+        typing.Callable[[typing.Dict[str, typing.Any]], typing.Awaitable[typing.Any]], optional
+    :param service_detector: Function that receives the token claims and returns whether
+        the token was issued to a service instead of a user. If not set, every token is
+        treated as a user token.
+    :type service_detector: typing.Callable[[typing.Dict[str, typing.Any]], bool], optional
     :param scope_mapper: Custom async function that transforms the claim values
         extracted from the token to permissions meaningful for your application,
         defaults to None
-    :type scope_mapper: typing.Callable[[typing.List[str]], typing.List[str]], optional
+    :type scope_mapper:
+        typing.Callable[[typing.List[str]], typing.Awaitable[typing.List[str]]], optional
     :param add_exception_response: Whether to add exception responses for 401 and 403.
         Defaults to True.
     :type add_exception_response: bool, optional
@@ -100,9 +111,11 @@ def setup_keycloak_middleware(  # pylint: disable=too-many-arguments
     app.add_middleware(
         KeycloakMiddleware,
         keycloak_configuration=keycloak_configuration,
-        user_mapper=user_mapper,
-        scope_mapper=scope_mapper,
         exclude_patterns=exclude_patterns,
+        user_mapper=user_mapper,
+        service_mapper=service_mapper,
+        service_detector=service_detector,
+        scope_mapper=scope_mapper,
     )
 
     # Add exception responses if requested
