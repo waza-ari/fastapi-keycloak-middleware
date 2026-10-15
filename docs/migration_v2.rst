@@ -4,6 +4,12 @@ Migrating to 2.0
 Version 2.0 introduces service principals, removes the deprecated decorator API and cleans up
 the configuration. This guide lists all breaking changes and how to update your application.
 
+Requirements
+^^^^^^^^^^^^
+
+2.0 requires :code:`python-keycloak` 4.7.3 or newer. Earlier releases are not compatible with
+:code:`httpx` 0.28 and newer, they fail to create a Keycloak client.
+
 Configuration
 ^^^^^^^^^^^^^
 
