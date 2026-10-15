@@ -18,7 +18,7 @@ poetry run pytest                # run tests
 poetry run pytest tests/test_claims.py::test_get_claim_prefers_literal_key   # single test
 ```
 
-Tests live in `tests/` and need no Keycloak server: the `make_backend` fixture in `tests/conftest.py` stubs `KeycloakOpenID` with fixed token claims. Async tests use the AnyIO pytest plugin (`pytestmark = pytest.mark.anyio`). CI does not run tests yet; it only runs pre-commit (ruff, ruff-format, pyupgrade, yaml/whitespace checks). `docs/testing.rst` documents how *consumers* test their apps with this middleware. It is not a guide for testing this library.
+Tests live in `tests/` and need no Keycloak server: the `make_backend` fixture in `tests/conftest.py` stubs `KeycloakOpenID` with fixed token claims. Async tests use the AnyIO pytest plugin (`pytestmark = pytest.mark.anyio`). CI runs pre-commit (ruff, ruff-format, pyupgrade, yaml/whitespace checks) and the tests on Python 3.11–3.14. `docs/testing.rst` documents how *consumers* test their apps with this middleware. It is not a guide for testing this library.
 
 ## Releasing
 
@@ -27,20 +27,25 @@ The version string is duplicated in three places, and all three must be bumped t
 - `fastapi_keycloak_middleware/__init__.py` (`__version__`)
 - `docs/conf.py` (`release`)
 
-Pushing a `vX.Y.Z` tag triggers `.github/workflows/release.yml`, which publishes to TestPyPI and PyPI via `JRubics/poetry-publish`. Commit messages follow Conventional Commits (`fix:`, `chore:`, `docs:`, `build:`).
+Pushing a `vX.Y.Z` tag triggers `.github/workflows/release.yml`, which publishes to TestPyPI and PyPI via `JRubics/poetry-publish`. Commit messages follow Conventional Commits (`fix:`, `chore:`, `docs:`, `build:`); breaking changes use `!` and a `BREAKING CHANGE:` footer, and belong in `docs/migration_v2.rst` while 2.0 is unreleased.
 
 ## Architecture
 
 Request flow: `setup_keycloak_middleware()` → `KeycloakMiddleware` (raw ASGI) → `KeycloakBackend.authenticate()` → results stored in the ASGI scope → read back by dependencies.
 
 - **`setup.py`**: `setup_keycloak_middleware()` is the main entry point. It adds the middleware, and it can also inject 401/403 responses into the app router's OpenAPI responses and register an `OpenIdConnect` security dependency on `app.router` for Swagger UI auth. Users can also add `KeycloakMiddleware` directly with `app.add_middleware`.
-- **`middleware.py`**: `KeycloakMiddleware` is a plain ASGI callable, not Starlette's `AuthenticationMiddleware`. It skips non-HTTP scopes (websockets are checked only when `enable_websocket_support` is set) and paths that match `exclude_patterns` (regexes, matched with `re.match` against `scope["path"]`). It maps backend exceptions to 401 JSON responses, optionally runs the async `scope_mapper` on the auth scopes, and sets `scope["auth"]` and `scope["user"]`.
-- **`keycloak_backend.py`**: `KeycloakBackend` builds a `KeycloakOpenID` client at construction time. Unless `use_introspection_endpoint` is set, it also **fetches the realm public key synchronously in `__init__`**, so constructing the middleware makes a network call to Keycloak. The token comes from the `Authorization` header, or from a cookie (`websocket_cookie_name`) on websocket upgrades. The backend validates the token locally (`a_decode_token`) or by introspection (`a_introspect`), extracts the configured `claims` into a dict, and passes that dict to the async `user_mapper`. The default mapper returns a `FastApiUser`. Two behaviors are easy to miss:
-  - Authorization scopes come from `authorization_claim` only when `authorization_method == AuthorizationMethod.CLAIM`. Otherwise `auth` is `None`. Claim lookups go through `claims.get_claim()`, which resolves dotted paths (a literal key wins), and `normalize_scopes()` splits space-delimited strings.
-  - Device authentication: if it is enabled and the device claim is truthy, the backend skips user mapping and returns `(auth, None)`, so `scope["user"]` is `None`.
-- **`schemas/keycloak_configuration.py`**: `KeycloakConfiguration` (Pydantic v2) holds every backend option. A new option goes here, gets documented in the class docstring (the Sphinx autodoc source), and is then used in the backend or middleware.
-- **`dependencies/`**: `get_user` and `get_auth` read `request.scope["user"]` / `request.scope["auth"]`. `CheckPermissions(required_permission, match_strategy)` is the **current, preferred** authorization API. It is a callable class used as `Depends(CheckPermissions(...))`. It returns an `AuthorizationResult` or raises a 403.
-- **`decorators/`**: `require_permission` is **deprecated** (it emits `DeprecationWarning`), and so is the `get_authorization_result` dependency. The decorator rewrites the endpoint's signature to inject a `request` parameter, and `strip_request` removes that parameter again before calling the original function. Don't build new features on the decorator path.
+- **`middleware.py`**: `KeycloakMiddleware` is a plain ASGI callable, not Starlette's `AuthenticationMiddleware`. It skips non-HTTP scopes (websockets are checked only when `enable_websocket_support` is set) and paths that match `exclude_patterns` (regexes, matched with `re.match` against `scope["path"]`). It runs the async `scope_mapper` on the scopes and sets `scope["user"]` (the principal), `scope["auth"]` (Starlette `AuthCredentials`) and `scope["auth_context"]` (`AuthContext`). Backend exceptions become 401 responses with a `WWW-Authenticate` challenge (RFC 6750); `AuthKeycloakError` becomes a 503.
+- **`keycloak_backend.py`**: `KeycloakBackend` builds a `KeycloakOpenID` client at construction time. Unless `use_introspection_endpoint` is set, it also **fetches the realm public key synchronously in `__init__`**, so constructing the middleware makes a network call to Keycloak. `authenticate()` returns `(AuthContext, principal)`, in this order:
+  1. Read the token from the `Authorization` header, or from a cookie (`websocket_cookie_name`) on websocket connections.
+  2. Validate it locally (`a_decode_token`) or by introspection (`a_introspect`; inactive tokens are rejected).
+  3. Check `required_claims`.
+  4. Classify the token as `PrincipalType.USER` or `SERVICE` with the optional `service_detector`; without a detector, every token is a user.
+  5. Extract scopes from `authorization_claim` (only for `AuthorizationMethod.CLAIM`, otherwise `[]`).
+  6. Call `user_mapper` or `service_mapper` with **all** claims. `None` or an exception rejects the request (`AuthUserError` / `AuthServiceError`). The defaults return `FastApiUser` / `ServicePrincipal`.
+
+  Claim lookups go through `claims.get_claim()`, which resolves dotted paths (a literal key wins). `normalize_scopes()` splits space-delimited strings.
+- **`schemas/keycloak_configuration.py`**: `KeycloakConfiguration` (Pydantic v2, `extra="forbid"`) holds every backend option. A new option goes here, gets documented in the class docstring (the Sphinx autodoc source), and is then used in the backend or middleware. Callables (mappers, detector) are arguments of `setup_keycloak_middleware` / `KeycloakMiddleware`, not configuration fields.
+- **`dependencies/`**: `principal.py` has `get_principal`, `get_user` (403 for services), `get_service_principal` (403 for users) and `get_auth_context`; all respond with 401 when the request is unauthenticated. `get_auth` returns the scopes as a list. `CheckPermissions(required_permission, match_strategy)` is a callable class used as `Depends(CheckPermissions(...))`. It returns an `AuthorizationResult` or raises a 403. It deliberately depends **only on `get_auth`**, so consumers can override `get_auth` in tests with the middleware mocked away. Don't add principal dependencies to it.
 - **`exceptions.py`**: internal `Auth*` exceptions raised by the backend and translated to HTTP responses by the middleware.
 
 Public API is whatever is re-exported in `fastapi_keycloak_middleware/__init__.py` (`__all__`). Keep it in sync when adding public symbols, and document them in `docs/api.rst`.
