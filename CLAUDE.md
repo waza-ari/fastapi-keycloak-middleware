@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-`fastapi-keycloak-middleware` is a library (published to PyPI) that adds Keycloak/OIDC authentication and claim-based authorization to FastAPI apps. Python >=3.11, managed with Poetry. Its runtime dependencies are only `fastapi` and `python-keycloak` (the `python-keycloak` range is pinned deliberately: `>=4.1,!=7.0.0,<8`). User docs live in `docs/` (Sphinx, published on Read the Docs).
+`fastapi-keycloak-middleware` is a library (published to PyPI) that adds Keycloak/OIDC authentication and claim-based authorization to FastAPI apps. Python >=3.11, managed with Poetry. Its runtime dependencies are only `fastapi` and `python-keycloak` (the `python-keycloak` range is pinned deliberately: `>=4.7.3,!=7.0.0,<8`; 4.7.3 is the first release compatible with `httpx` 0.28, and CI tests that minimum in a separate job, so bump both together). User docs live in `docs/` (Sphinx, published on Read the Docs).
 
 ## Commands
 

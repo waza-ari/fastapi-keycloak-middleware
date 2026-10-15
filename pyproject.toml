@@ -5,7 +5,7 @@ description = "Middleware for FastAPI to authenticate a user against keycloak"
 authors = [{ name = "Daniel Herrmann", email = "daniel.herrmann1@gmail.com" }]
 readme = "README.md"
 requires-python = ">=3.11,<4"
-dependencies = ["fastapi>=0.73.0", "python-keycloak>=4.1,!=7.0.0,<8"]
+dependencies = ["fastapi>=0.73.0", "python-keycloak>=4.7.3,!=7.0.0,<8"]
 
 [tool.poetry]
 packages = [{ include = "fastapi_keycloak_middleware" }]
