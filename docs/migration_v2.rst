@@ -169,6 +169,7 @@ Other Changes
 
 * :code:`ExceptionResponse` can be imported from :code:`fastapi_keycloak_middleware` directly.
 * Websocket connections are detected by the ASGI scope type instead of the :code:`Upgrade` header.
+* Websocket routes work when :code:`add_swagger_auth` is enabled. In 1.x, they failed with a :code:`TypeError`.
 * :code:`authorization_claim` and :code:`required_claims` support dot separated paths into nested claims,
   e.g. :code:`realm_access.roles`, and space delimited strings like the :code:`scope` claim are split into a
   list of scopes. See :doc:`authorization`.

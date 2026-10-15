@@ -10,6 +10,7 @@ import typing
 
 from fastapi import Depends, FastAPI
 from fastapi.security import OpenIdConnect
+from starlette.requests import HTTPConnection
 
 from fastapi_keycloak_middleware.keycloak_backend import PrincipalMapper, ServiceDetector
 from fastapi_keycloak_middleware.middleware import KeycloakMiddleware, ScopeMapper
@@ -19,6 +20,20 @@ from fastapi_keycloak_middleware.schemas.keycloak_configuration import (
 )
 
 log = logging.getLogger(__name__)
+
+
+class _ConnectionOpenIdConnect(OpenIdConnect):
+    """
+    OpenIdConnect security scheme that can be used as dependency for all routes.
+
+    The scheme is added as router dependency, which also applies it to websocket
+    routes. FastAPI only injects ``Request`` into HTTP routes, so the original
+    ``__call__(request: Request)`` fails for websockets. ``HTTPConnection`` is
+    injected for both.
+    """
+
+    async def __call__(self, request: HTTPConnection) -> str | None:  # type: ignore[override]
+        return await super().__call__(request)  # type: ignore[arg-type]
 
 
 def setup_keycloak_middleware(  # pylint: disable=too-many-arguments
@@ -149,7 +164,7 @@ def setup_keycloak_middleware(  # pylint: disable=too-many-arguments
     if add_swagger_auth:
         suffix = ".well-known/openid-configuration"
         openId_base_url = swagger_openId_base_url or keycloak_configuration.url
-        security_scheme = OpenIdConnect(
+        security_scheme = _ConnectionOpenIdConnect(
             openIdConnectUrl=f"{openId_base_url.rstrip('/')}/realms/{keycloak_configuration.realm}/{suffix}",
             scheme_name=swagger_scheme_name,
             auto_error=False,
