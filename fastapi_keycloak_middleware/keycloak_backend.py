@@ -8,7 +8,6 @@ import logging
 import typing
 
 import keycloak
-from jwcrypto import jwk
 from keycloak import KeycloakOpenID
 from starlette.requests import HTTPConnection
 
@@ -22,6 +21,7 @@ from fastapi_keycloak_middleware.exceptions import (
     AuthUserError,
 )
 from fastapi_keycloak_middleware.fast_api_user import FastApiUser
+from fastapi_keycloak_middleware.jwks import KeySetCache, get_token_kid
 from fastapi_keycloak_middleware.schemas.auth_context import AuthContext
 from fastapi_keycloak_middleware.schemas.authorization_methods import (
     AuthorizationMethod,
@@ -54,8 +54,10 @@ class KeycloakBackend:
     ):
         self.keycloak_configuration = keycloak_configuration
         self.keycloak_openid = self._get_keycloak_openid()
-        if not self.keycloak_configuration.use_introspection_endpoint:
-            self.public_key = self._get_public_key()
+        # The key set is fetched on the first request, not at startup
+        self.key_set_cache = KeySetCache(
+            self.keycloak_openid, keycloak_configuration.jwks_refresh_interval
+        )
         self.user_mapper = user_mapper or KeycloakBackend._default_user_mapper
         self.service_mapper = service_mapper or KeycloakBackend._default_service_mapper
         self.service_detector = service_detector
@@ -71,23 +73,6 @@ class KeycloakBackend:
             client_secret_key=self.keycloak_configuration.client_secret,
             verify=self.keycloak_configuration.verify,
         )
-
-    def _get_public_key(self) -> jwk.JWK:
-        """
-        Returns the public key used to validate tokens.
-        This is only used if the introspection endpoint is not used.
-        """
-        log.debug("Fetching public key from Keycloak server at %s", self.keycloak_configuration.url)
-        try:
-            key = (
-                "-----BEGIN PUBLIC KEY-----\n"
-                + self.keycloak_openid.public_key()
-                + "\n-----END PUBLIC KEY-----"
-            )
-            return jwk.JWK.from_pem(key.encode("utf-8"))
-        except keycloak.exceptions.KeycloakGetError as exc:
-            log.error("Failed to fetch public key from Keycloak server: %s", exc.error_message)
-            raise AuthKeycloakError from exc
 
     @staticmethod
     async def _default_user_mapper(claims: typing.Dict[str, typing.Any]) -> FastApiUser:
@@ -148,12 +133,17 @@ class KeycloakBackend:
                 raise AuthInvalidToken
             return token_info
 
-        log.debug("Using keycloak public key to validate token")
+        options = dict(self.keycloak_configuration.validation_options)
+        # A key passed in the validation options takes precedence over the realm key set
+        key = options.pop("key", None)
+        if self.keycloak_configuration.validate_token and key is None:
+            log.debug("Using the realm key set to validate token")
+            key = await self.key_set_cache.get_key_set(get_token_kid(token))
+        if key is not None:
+            options["key"] = key
+
         return await self.keycloak_openid.a_decode_token(
-            token,
-            self.keycloak_configuration.validate_token,
-            **self.keycloak_configuration.validation_options,
-            key=self.public_key,
+            token, self.keycloak_configuration.validate_token, **options
         )
 
     def _get_scopes(self, claims: typing.Dict[str, typing.Any]) -> typing.List[str]:
@@ -199,6 +189,7 @@ class KeycloakBackend:
 
         scopes = self._get_scopes(claims)
 
+        error: typing.Type[Exception]
         if principal_type == PrincipalType.SERVICE:
             mapper, error = self.service_mapper, AuthServiceError
         else:

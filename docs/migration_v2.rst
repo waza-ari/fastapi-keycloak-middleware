@@ -143,6 +143,21 @@ Error Responses
 * When using the introspection endpoint, tokens reported as inactive are rejected. In 1.x, they were only
   rejected if a required claim was missing.
 
+Signing Keys
+^^^^^^^^^^^^
+
+Tokens are validated against the realm key set (JWKS) instead of the single active public key, so rotating
+the realm keys no longer requires restarting the application. See :doc:`advanced_topics` for details.
+
+* The key set is fetched on the first request instead of when the middleware is created. A Keycloak server
+  that is not reachable no longer prevents the application from starting, requests are answered with
+  :code:`503` until the key set could be fetched.
+* :code:`KeycloakBackend.public_key` has been removed.
+* A :code:`key` in :code:`validation_options` is used instead of the realm keys. In 1.x, this raised an
+  error on every request.
+* :code:`validation_options` accepts any value. In 1.x, keys were silently converted to plain dictionaries,
+  and options like a list of audiences were rejected.
+
 Other Changes
 ^^^^^^^^^^^^^
 

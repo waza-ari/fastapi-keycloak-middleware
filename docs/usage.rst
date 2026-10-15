@@ -37,7 +37,7 @@ This is a very basic example on how to add the Middleware to a FastAPI applicati
 This is a minimal example of using the middleware and will already perform the following actions:
 
 * Parse the :code:`Authorization` header for a :code:`Bearer` token (the token scheme can be configured, see below). Return :code:`401` if no token is found.
-* Validate the token using the public key of the realm obtained from Keycloak. Return :code:`401` if the token is invalid or expired.
+* Validate the token using the public keys of the realm (JWKS), fetched from Keycloak on the first request. Return :code:`401` if the token is invalid or expired.
 * Make sure the required claims are present in the token. By default, only the :code:`sub` claim is required, which is a mandatory, unique and immutable identifier of the user. Return :code:`401` if a required claim is missing.
 * Get the user object based on the token claims. As no custom callback function is provided, it will return an instance of :code:`FastApiUser` built from the :code:`sub`, :code:`given_name` and :code:`family_name` claims.
 * Add proper 401 and 403 responses to the OpenAPI schema

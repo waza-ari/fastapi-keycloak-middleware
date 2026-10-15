@@ -41,10 +41,51 @@ This module implements these best practices.
 .. warning::
     Especially during the authorization phase, the user object is included in the log message. Make sure your user object is serializable to a string, otherwise the log message will contain non-helpful strings.
 
+Signing Keys and Key Rotation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Tokens are validated locally using the public keys Keycloak publishes for the realm, the JSON Web Key Set
+(JWKS) at :code:`/realms/<realm>/protocol/openid-connect/certs`. Each token names the key it was signed with
+in the :code:`kid` (key ID) header, which is used to select the key from the set.
+
+The key set is fetched on the first request that needs it, so the application can start while Keycloak is
+not reachable. Until the key set could be fetched, requests are answered with :code:`503`.
+
+When the realm keys are rotated in Keycloak, tokens signed with the new key reference a key ID that is not
+known yet. The key set is then fetched again, and the token is validated against the new key. The previous
+key stays in the key set as long as it is enabled in Keycloak (as passive key), so tokens issued before the
+rotation remain valid until they expire. No restart of the application is required.
+
+To prevent tokens with made up key IDs from making the application hammer Keycloak, the key set is fetched
+at most once per :code:`jwks_refresh_interval` (30 seconds by default). Failed attempts count as well, the
+previously fetched key set stays in use if fetching fails.
+
+.. code-block:: python
+
+    keycloak_config = KeycloakConfiguration(
+        # ...
+        jwks_refresh_interval=60,
+    )
+
+.. note::
+    The key set is only fetched again when a token references an unknown key ID, there is no periodic
+    refresh. If the key set was fetched shortly before a new key starts being used, tokens signed with
+    the new key are rejected until the refresh interval has passed.
+
+To validate tokens against a fixed key instead, pass it as :code:`key` in the :code:`validation_options`.
+The key set is never fetched then:
+
+.. code-block:: python
+
+    keycloak_config = KeycloakConfiguration(
+        # ...
+        validation_options={"key": jwk.JWK.from_pem(public_key_pem)},
+    )
+
 Token Introspection vs Opaque Tokens
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-By default, this library will attempt to validate the JWT signature locally using the public key obtained from Keycloak. This is the recommended way to validate the token, as it does not require any additional requests to Keycloak. Also, Keycloak does not support opaque tokens yet.
+By default, this library will attempt to validate the JWT signature locally using the public keys obtained from Keycloak. This is the recommended way to validate the token, as it does not require any additional requests to Keycloak. Also, Keycloak does not support opaque tokens yet.
 
 If you want to still use the token endpoint to validate the token, you can opt to do so:
 

@@ -2,9 +2,8 @@
 This module contains the schema to configure Keycloak.
 """
 
-from typing import Union
+from typing import Any, Union
 
-from jwcrypto import jwk
 from pydantic import BaseModel, ConfigDict, Field
 
 from fastapi_keycloak_middleware.schemas.authorization_methods import (
@@ -47,6 +46,11 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
         for token validation. Should not be needed for Keycloak in general
         as Keycloak doesn't support opaque tokens. Defaults to ``False``.
     :type use_introspection_endpoint: bool, optional
+    :param jwks_refresh_interval: Minimum number of seconds between two fetches of the
+        realm key set (JWKS). The key set is fetched on the first request and refetched
+        when a token is signed with an unknown key, e.g. after the realm keys have been
+        rotated. Defaults to ``30``.
+    :type jwks_refresh_interval: float, optional
     :param verify: Whether to verify SSL connection. Defaults to ``True``
     :type verify: Union[bool,str], optional
     :param validate_token: Whether to validate the token. Defaults to ``True``.
@@ -54,8 +58,9 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
     :param validation_options: Decode options that are passed to `JWCrypto`'s JWT
         constructor. Defaults to ``{}``. See the following project for an overview of
         acceptable options: https://jwcrypto.readthedocs.io/en/latest/jwt.html
-    :type validation_options: dict[str, Union[str, dict[str, Union[None, str]], list[str]]],
-        optional
+        A ``key`` (``jwk.JWK`` or ``jwk.JWKSet``) passed here is used instead of the
+        realm key set, which is then never fetched.
+    :type validation_options: dict[str, Any], optional
     :param enable_websocket_support: Whether to enable WebSocket support. Defaults to ``True``.
     :type enable_websocket_support: bool, optional
     :param websocket_cookie_name: Name of the cookie that contains the access token.
@@ -101,6 +106,12 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
         title="Use Introspection Endpoint",
         description="Whether to use the introspection endpoint.",
     )
+    jwks_refresh_interval: float = Field(
+        default=30,
+        ge=0,
+        title="JWKS Refresh Interval",
+        description="Minimum number of seconds between two fetches of the realm key set.",
+    )
     verify: Union[bool, str] = Field(
         default=True,
         title="Verify",
@@ -111,9 +122,9 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
         title="Validate Token",
         description="Whether to validate the token.",
     )
-    validation_options: dict[
-        str, Union[str, dict[str, Union[None, str]], list[str], jwk.JWK, jwk.JWKSet]
-    ] = Field(
+    # Values are passed to jwcrypto unchanged. A narrower type would make pydantic copy
+    # keys (jwk.JWK is a dict subclass) into plain dicts and reject valid options.
+    validation_options: dict[str, Any] = Field(
         default={},
         title="JWCrypto JWT Options",
         description="Decode options that are passed to jwcrypto's JWT constructor.",
