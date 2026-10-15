@@ -73,7 +73,7 @@ def test_missing_claim(make_client):
 def test_websocket_cookie(make_client):
     client = make_client(TOKEN, user_mapper=map_user)
     client.cookies.set("access_token", "Bearer token")
-    with client.websocket_connect("/ws", headers={"upgrade": "websocket"}) as websocket:
+    with client.websocket_connect("/ws") as websocket:
         assert websocket.receive_json() == {"user": "jane"}
 
 
