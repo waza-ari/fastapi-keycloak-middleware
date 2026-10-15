@@ -15,6 +15,7 @@ from starlette.requests import HTTPConnection
 from fastapi_keycloak_middleware.keycloak_backend import PrincipalMapper, ServiceDetector
 from fastapi_keycloak_middleware.middleware import KeycloakMiddleware, ScopeMapper
 from fastapi_keycloak_middleware.schemas.exception_response import ExceptionResponse
+from fastapi_keycloak_middleware.schemas.exclude_rule import ExcludeRule
 from fastapi_keycloak_middleware.schemas.keycloak_configuration import (
     KeycloakConfiguration,
 )
@@ -39,7 +40,7 @@ class _ConnectionOpenIdConnect(OpenIdConnect):
 def setup_keycloak_middleware(  # pylint: disable=too-many-arguments
     app: FastAPI,
     keycloak_configuration: KeycloakConfiguration,
-    exclude_patterns: typing.List[str] | None = None,
+    exclude_patterns: typing.Sequence[typing.Union[str, ExcludeRule]] | None = None,
     user_mapper: PrincipalMapper | None = None,
     service_mapper: PrincipalMapper | None = None,
     service_detector: ServiceDetector | None = None,
@@ -62,11 +63,11 @@ def setup_keycloak_middleware(  # pylint: disable=too-many-arguments
     :param keycloak_configuration: KeyCloak configuration object. For potential
         options, see the KeycloakConfiguration schema.
     :type keycloak_configuration: KeycloakConfiguration
-    :param exclude_patterns: List of paths that should be excluded from authentication.
-        Defaults to an empty list. The strings will be compiled to regular expressions
-        and used to match the path. If the path matches, the middleware
-        will skip authentication.
-    :type exclude_patterns: typing.List[str], optional
+    :param exclude_patterns: Requests that should be excluded from authentication.
+        Each entry is either an :class:`ExcludeRule`, or a string holding a regular
+        expression that must match the **entire** request path. Defaults to an
+        empty list. Invalid entries raise a ``ValueError``.
+    :type exclude_patterns: typing.List[typing.Union[str, ExcludeRule]], optional
     :param user_mapper: Custom async function that receives the claims of a user token
         and returns a representation of the user that is meaningful to your application.
         Returning ``None`` rejects the request. Defaults to returning a ``FastApiUser``.

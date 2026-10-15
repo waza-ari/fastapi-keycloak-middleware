@@ -149,6 +149,30 @@ Error Responses
 * When using the introspection endpoint, tokens reported as inactive are rejected. In 1.x, they were only
   rejected if a required claim was missing.
 
+Excluded Paths
+^^^^^^^^^^^^^^
+
+String entries in :code:`exclude_patterns` must match the **entire** request path. In 1.x, they only had
+to match the start of the path, so :code:`"/status"` also excluded :code:`/statusboard`, :code:`/status/admin`
+and any other path starting with :code:`/status` from authentication.
+
+Review your patterns. Patterns that already end with :code:`$` keep working. If a pattern should cover
+a path and everything below it, use a prefix rule, for example for FastAPI's Swagger UI login redirect at
+:code:`/docs/oauth2-redirect`:
+
+.. code-block:: python
+
+    from fastapi_keycloak_middleware import ExcludeRule
+
+    # 1.x
+    exclude_patterns = ["/docs", "/openapi.json"]
+
+    # 2.0
+    exclude_patterns = [ExcludeRule(prefix="/docs"), "/openapi.json"]
+
+Rules can also be limited to HTTP methods now, see :doc:`advanced_topics`. Invalid patterns raise a
+:code:`ValueError` when the middleware is created. In 1.x, they were logged and ignored.
+
 Signing Keys
 ^^^^^^^^^^^^
 
