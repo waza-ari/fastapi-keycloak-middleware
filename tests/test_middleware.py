@@ -212,6 +212,21 @@ def test_websocket_cookie(make_client):
         assert websocket.receive_json() == {"user": "jane"}
 
 
+def test_websocket_with_swagger_auth(make_client):
+    """Regression test for #75: the Swagger security dependency broke websocket routes"""
+    client = make_client(TOKEN, user_mapper=map_user, add_swagger_auth=True)
+    assert client.get("/me", headers=AUTH_HEADER).status_code == 200
+
+    client.cookies.set("access_token", "Bearer token")
+    with client.websocket_connect("/ws") as websocket:
+        assert websocket.receive_json() == {"user": "jane"}
+
+    # The security scheme is still part of the OpenAPI schema
+    spec = client.app.openapi()
+    assert spec["components"]["securitySchemes"]["keycloak-openid"]["type"] == "openIdConnect"
+    assert spec["paths"]["/me"]["get"]["security"] == [{"keycloak-openid": []}]
+
+
 def test_websocket_without_cookie(make_client):
     client = make_client(TOKEN, user_mapper=map_user)
     with pytest.raises(WebSocketDisconnect):
