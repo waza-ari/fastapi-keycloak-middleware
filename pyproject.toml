@@ -1,6 +1,6 @@
 [project]
 name = "fastapi-keycloak-middleware"
-version = "2.0.0rc1"
+version = "2.0.0"
 description = "Middleware for FastAPI to authenticate a user against keycloak"
 authors = [{ name = "Daniel Herrmann", email = "daniel.herrmann1@gmail.com" }]
 readme = "README.md"
