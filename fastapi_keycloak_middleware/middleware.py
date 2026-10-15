@@ -7,7 +7,6 @@ here: https://github.com/code-specialist/fastapi-auth-middleware
 
 import dataclasses
 import logging
-import re
 import typing
 
 from jwcrypto.common import JWException
@@ -29,6 +28,7 @@ from fastapi_keycloak_middleware.keycloak_backend import (
     PrincipalMapper,
     ServiceDetector,
 )
+from fastapi_keycloak_middleware.schemas.exclude_rule import ExcludeRule
 from fastapi_keycloak_middleware.schemas.keycloak_configuration import (
     KeycloakConfiguration,
 )
@@ -58,11 +58,11 @@ class KeycloakMiddleware:
     :param keycloak_configuration: KeyCloak configuration object. For potential
         options, see the KeycloakConfiguration schema.
     :type keycloak_configuration: KeycloakConfiguration
-    :param exclude_patterns: List of paths that should be excluded from authentication.
-        Defaults to an empty list. The strings will be compiled to regular expressions
-        and used to match the path. If the path matches, the middleware
-        will skip authentication.
-    :type exclude_patterns: typing.List[str], optional
+    :param exclude_patterns: Requests that should be excluded from authentication.
+        Each entry is either an :class:`ExcludeRule`, or a string holding a regular
+        expression that must match the **entire** request path. Defaults to an
+        empty list. Invalid entries raise a ``ValueError``.
+    :type exclude_patterns: typing.List[typing.Union[str, ExcludeRule]], optional
     :param user_mapper: Custom async function that receives the claims of a user token
         and returns a representation of the user that is meaningful to your application.
         Returning ``None`` rejects the request. Defaults to returning a ``FastApiUser``.
@@ -89,7 +89,7 @@ class KeycloakMiddleware:
         self,
         app: ASGIApp,
         keycloak_configuration: KeycloakConfiguration,
-        exclude_patterns: typing.List[str] | None = None,
+        exclude_patterns: typing.Sequence[typing.Union[str, ExcludeRule]] | None = None,
         user_mapper: PrincipalMapper | None = None,
         service_mapper: PrincipalMapper | None = None,
         service_detector: ServiceDetector | None = None,
@@ -109,28 +109,22 @@ class KeycloakMiddleware:
         self.authentication_scheme = keycloak_configuration.authentication_scheme
         log.debug("Keycloak Middleware initialized")
 
-        # Try to compile patterns
-        self.exclude_paths = []
-        if exclude_patterns and isinstance(exclude_patterns, list):
-            for path in exclude_patterns:
-                try:
-                    self.exclude_paths.append(re.compile(path))
-                except re.error:
-                    log.error("Could not compile regex for exclude pattern %s", path)
+        # Strings are full match path patterns, invalid entries raise a ValueError
+        self.exclude_rules: typing.List[ExcludeRule] = [
+            rule if isinstance(rule, ExcludeRule) else ExcludeRule(path=rule)
+            for rule in exclude_patterns or []
+        ]
 
-    async def _exclude_path(self, path: str) -> bool:
+    def _is_excluded(self, scope: Scope) -> bool:
         """
-        Checks if a path should be excluded from authentication
+        Checks if a request should be excluded from authentication
 
-        :param path: The path to check
-        :type path: str
-        :return: True if the path should be excluded, False otherwise
+        :param scope: The ASGI scope of the request
+        :type scope: Scope
+        :return: True if the request should be excluded, False otherwise
         :rtype: bool
         """
-        for pattern in self.exclude_paths:
-            if pattern.match(path):
-                return True
-        return False
+        return any(rule.matches(scope) for rule in self.exclude_rules)
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send):
         log.debug("Keycloak Middleware is handling request")
@@ -144,10 +138,12 @@ class KeycloakMiddleware:
             await self.app(scope, receive, send)  # pragma nocover # Bypass
             return
 
-        # Extract path from scope
-        path = scope["path"]
-        if await self._exclude_path(path):
-            log.debug("Skipping authentication for excluded path %s", path)
+        if self._is_excluded(scope):
+            log.debug(
+                "Skipping authentication for excluded request %s %s",
+                scope.get("method", scope["type"]),
+                scope["path"],
+            )
             await self.app(scope, receive, send)
             return
 

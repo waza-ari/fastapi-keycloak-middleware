@@ -8,6 +8,7 @@ from starlette.requests import HTTPConnection
 from fastapi_keycloak_middleware import (
     AuthorizationResult,
     CheckPermissions,
+    ExcludeRule,
     KeycloakConfiguration,
     get_auth,
     get_auth_context,
@@ -118,7 +119,7 @@ def make_client(stub_keycloak):
         setup_keycloak_middleware(
             app,
             keycloak_configuration=make_configuration(**(config or {})),
-            exclude_patterns=["^/public"],
+            exclude_patterns=[ExcludeRule(prefix="/public")],
             **middleware,
         )
 

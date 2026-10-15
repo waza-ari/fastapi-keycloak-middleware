@@ -186,21 +186,29 @@ There are two ways of doing this.
 .. note::
     Both examples can also be combined to achieve more complex setups.
 
-Exclude certain paths
----------------------
+Exclude certain requests
+------------------------
 
-The middleware provides a configuration option to exclude certain paths from authentication. Those are compiled as regex and then matched against the request path.
+The middleware provides a configuration option to exclude certain requests from authentication. Each entry
+is either a string or an :code:`ExcludeRule`.
 
 **Example:**
 
 .. code-block:: python
-    :emphasize-lines: 12
+    :emphasize-lines: 4-11,17
+
+    from fastapi_keycloak_middleware import ExcludeRule
 
     excluded_routes = [
+        # Strings are regular expressions that must match the entire path
         "/status",
-        "/docs",
         "/openapi.json",
-        "/redoc",
+        r"/users/[0-9]+/avatar",
+        # Prefixes match whole path segments: /docs and /docs/oauth2-redirect, but not /docs-admin
+        ExcludeRule(prefix="/docs"),
+        ExcludeRule(prefix="/redoc"),
+        # Rules can be limited to HTTP methods
+        ExcludeRule(path="/register", methods={"POST"}),
     ]
 
     app = FastAPI()
@@ -210,14 +218,28 @@ The middleware provides a configuration option to exclude certain paths from aut
         exclude_patterns=excluded_routes,
     )
 
-This would make sure you can access the docs, alternate docs, OpenAPI schema and health check endpoint without authentication.
+This would make sure you can access the docs (including the Swagger UI login redirect), alternate docs,
+OpenAPI schema and health check endpoint without authentication, and register using :code:`POST /register`.
+
+An :code:`ExcludeRule` accepts the following criteria, all given criteria must match:
+
+* :code:`path`: Regular expression that must match the **entire** request path, like a string entry.
+* :code:`prefix`: Literal path prefix, matched on whole path segments. A trailing slash makes no difference.
+  :code:`path` and :code:`prefix` can't be combined.
+* :code:`methods`: HTTP methods the rule applies to, all methods if not set. :code:`GET` includes :code:`HEAD`.
+  Rules with methods never match websocket connections, as they don't have a method.
+
+A rule with only :code:`methods` applies to every path, e.g. :code:`ExcludeRule(methods={"OPTIONS"})`
+excludes all CORS preflight requests. Adding the CORS middleware in the correct order (see :ref:`usage`)
+is the better solution though.
 
 .. warning::
-    At the moment only the paths are checked, not the request method or other criteria. See issue `#3 <https://github.com/waza-ari/fastapi-keycloak-middleware/issues/3>`_ for more details.
+    String entries and :code:`path` must match the entire path. In versions before 2.0, :code:`"/status"`
+    also excluded every path starting with :code:`/status`, such as :code:`/statusboard` or
+    :code:`/status/admin`. Use :code:`prefix` if you intend to exclude a path and everything below it.
 
-**Technical Details:**
-
-Under the hood these paths are compiled to regex and then matched against the request path. Each string is passed as-is to :code:`re.compile` and stored, such that it can be used later to patch against the request path.
+Invalid entries, such as a regular expression that does not compile, raise a :code:`ValueError` when the
+middleware is created.
 
 Use Multiple Applications
 -------------------------

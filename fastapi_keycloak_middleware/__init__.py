@@ -22,6 +22,7 @@ from fastapi_keycloak_middleware.schemas.authorization_methods import (
 )
 from fastapi_keycloak_middleware.schemas.authorization_result import AuthorizationResult
 from fastapi_keycloak_middleware.schemas.exception_response import ExceptionResponse
+from fastapi_keycloak_middleware.schemas.exclude_rule import ExcludeRule
 from fastapi_keycloak_middleware.schemas.keycloak_configuration import (
     KeycloakConfiguration,
 )
@@ -36,6 +37,7 @@ __all__ = [
     AuthContext.__name__,
     AuthorizationResult.__name__,
     ExceptionResponse.__name__,
+    ExcludeRule.__name__,
     KeycloakMiddleware.__name__,
     KeycloakConfiguration.__name__,
     AuthorizationMethod.__name__,

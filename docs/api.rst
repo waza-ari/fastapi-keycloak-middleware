@@ -18,6 +18,7 @@ Support Classes
 .. _keycloak_configuration:
 .. autoclass:: KeycloakConfiguration
     :members:
+.. autoclass:: ExcludeRule
 .. autoclass:: AuthContext
     :members:
 .. autoclass:: PrincipalType

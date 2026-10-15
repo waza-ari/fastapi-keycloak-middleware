@@ -96,7 +96,9 @@ def test_excluded_path(make_client):
 
 def test_excluded_path_has_no_principal(make_client):
     response = make_client(TOKEN).get("/public/principal")
+    # Rejected by the dependency, not by the middleware
     assert response.status_code == 401
+    assert response.json() == {"detail": "Request is not authenticated"}
     assert response.headers["WWW-Authenticate"] == "Bearer"
 
 
