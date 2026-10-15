@@ -13,6 +13,7 @@ from keycloak import KeycloakOpenID
 from starlette.authentication import AuthenticationBackend, BaseUser
 from starlette.requests import HTTPConnection
 
+from fastapi_keycloak_middleware.claims import get_claim, normalize_scopes
 from fastapi_keycloak_middleware.exceptions import (
     AuthClaimMissing,
     AuthHeaderMissing,
@@ -150,7 +151,7 @@ class KeycloakBackend(AuthenticationBackend):
         user_info = {}
         for claim in claims:
             try:
-                user_info[claim] = token_info[claim]
+                user_info[claim] = get_claim(token_info, claim)
             except KeyError:
                 log.warning("Claim %s is configured but missing in the token", claim)
                 if self.keycloak_configuration.reject_on_missing_claim:
@@ -161,9 +162,12 @@ class KeycloakBackend(AuthenticationBackend):
         # Handle Authorization depending on the Claim Method
         scope_auth = None
         if self.keycloak_configuration.authorization_method == AuthorizationMethod.CLAIM:
-            if self.keycloak_configuration.authorization_claim not in token_info:
-                raise AuthClaimMissing
-            scope_auth = token_info[self.keycloak_configuration.authorization_claim]
+            try:
+                scope_auth = normalize_scopes(
+                    get_claim(token_info, self.keycloak_configuration.authorization_claim)
+                )
+            except KeyError as exc:
+                raise AuthClaimMissing from exc
 
         # Check if the device authentication claim is present and evaluated to true
         # If so, the rest (mapping claims, user mapper, authorization) is skipped
