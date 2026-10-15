@@ -41,7 +41,7 @@ The package helps with:
 
 * An easy to use middleware that validates the request for an access token
 * Validation can done in one of two ways:
-   * Validate locally using the public key obtained from Keycloak
+   * Validate locally using the realm public keys (JWKS) obtained from Keycloak, supporting key rotation without restarts
    * Validate using the Keycloak token introspection endpoint
 * Using Starlette authentication mechanisms to store both the user object as well as the authorization scopes in the Request object
 * Ability to provide custom callback functions to retrieve the user object (e.g. from your database) and to provide an arbitrary mapping to authentication scopes (e.g. roles to permissions)
