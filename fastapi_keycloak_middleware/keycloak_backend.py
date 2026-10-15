@@ -99,7 +99,7 @@ class KeycloakBackend(AuthenticationBackend):
         # from the cookies
         if (
             self.keycloak_configuration.enable_websocket_support
-            and conn.headers.get("upgrade") == "websocket"
+            and conn.scope["type"] == "websocket"
         ):
             auth_header = conn.cookies.get(self.keycloak_configuration.websocket_cookie_name, None)
         else:
