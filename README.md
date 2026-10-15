@@ -14,7 +14,7 @@ This package provides a middleware for [FastAPI](http://fastapi.tiangolo.com)  t
 simplifies integrating with [Keycloak](http://keycloak.org) for
 authentication and authorization. It supports OIDC and supports validating access
 tokens, reading roles and basic authentication. In addition it provides several
-decorators and dependencies to easily integrate into your FastAPI application.
+dependencies to easily integrate into your FastAPI application.
 
 It relies on the [python-keycloak](http://python-keycloak.readthedocs.io) package,
 which is the only dependency outside of the FastAPI ecosystem which would be installed
@@ -36,7 +36,7 @@ There is a clear separation between the authentication and authorization:
   that verifies the users access token obtained from the
   identity provider (Keycloak in this case).
 - **Authorization** is about deciding which resources can be
-  accessed. This package providers convenience decoraters to
+  accessed. This package provides convenience dependencies to
   enforce certain roles or permissions on FastAPI endpoints.
 
 ## Installation
@@ -63,8 +63,11 @@ The package helps with:
    * Validate using the Keycloak token introspection endpoint
 * Using Starlette authentication mechanisms to store both the user object as well as the authorization scopes in the Request object
 * Ability to provide custom callback functions to retrieve the user object (e.g. from your database) and to provide an arbitrary mapping to authentication scopes (e.g. roles to permissions)
-* A decorator to use previously stored information to enforce certain roles or permissions on FastAPI endpoints
-* Convenience dependencies to retrieve the user object or the authorization result after evaluation within the FastAPI endpoint
+* Support for service principals (client credentials tokens) with a configurable detection, working with any identity provider
+* A dependency to enforce certain roles or permissions on FastAPI endpoints, for users and services alike
+* Convenience dependencies to retrieve the user or service object, the authorization scopes or all token claims within the FastAPI endpoint
+
+Upgrading from 1.x? See the [migration guide](https://fastapi-keycloak-middleware.readthedocs.io/en/latest/migration_v2.html).
 
 ## Acknowledgements
 

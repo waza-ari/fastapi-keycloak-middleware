@@ -22,11 +22,16 @@ Overview
 
 In general, the folowing process is followed:
 
-#. A user is authenticated.
+#. A user or service is authenticated.
 #. Based on the chosen authorization method, the Scope is compiled. Currently, only claim based scopes are supported (that is, the information is extracted from a claim), but there are plans to add Keycloaks fine grained permissions system at a later time.
 #. A mapper is applied to map the obtained Scope to Permissions. For example, if your AT containes the :code:`roles` claim, you can map these roles to permissions.
-#. A decorator is used on the FastAPI endpoint to enforce a certain permission.
-#. Optionally, you can get the result of the permission evaluation as dependency and can work with it to ensure a more fine grained control.
+#. The :code:`CheckPermissions` dependency is used on the FastAPI endpoint to enforce a certain permission.
+#. Optionally, you can get the result of the permission evaluation from the dependency and work with it to ensure a more fine grained control.
+
+Authorization works the same way for users and services (see :ref:`service_principals`): the
+scopes are extracted from the same claim and passed through the same mapper. If an endpoint
+should only be accessible for services, grant the required permission to service clients only,
+or use the :code:`get_service_principal` dependency.
 
 Basic Usage
 ^^^^^^^^^^^
@@ -57,7 +62,7 @@ To enable authorization, simply pass the chosen method to the middleware initial
     setup_keycloak_middleware(
         app,
         keycloak_configuration=keycloak_config,
-        get_user=auth_get_user,
+        user_mapper=auth_get_user,
     )
 
 Protect Endpoint
@@ -74,8 +79,8 @@ Then, on the endpoint you want to protect, add a dependency specifying which per
     def protected():
         return {"message": "Hello World"}
 
-.. note::
-   Previous versions of the library used the :code:`@require_permission` decorator. This has been deprecated in favor of the :code:`CheckPermissions` dependency, please update your code accordingly.
+Requests without the permission are rejected with a :code:`403` response. This includes
+requests to paths excluded from authentication, as they don't have any scopes.
 
 Claim Authorization
 ^^^^^^^^^^^^^^^^^^^
@@ -158,7 +163,7 @@ In the examples above, the content of the claims is used unmodified. You can add
     setup_keycloak_middleware(
         app,
         keycloak_configuration=keycloak_config,
-        get_user=auth_get_user,
+        user_mapper=auth_get_user,
         scope_mapper=scope_mapper,
     )
 
@@ -179,15 +184,18 @@ You can build more complex authorization rules by combining multiple permissions
     def view_user():
         return {"userinfo": "Hello World"}
 
-By default, the decorator will now enforce that the user bas both permissions. You can change this behavior by passing the :code:`match_strategy` parameter:
+By default, the dependency will now enforce that the user has both permissions. You can change this behavior by passing the :code:`match_strategy` parameter:
 
 .. code-block:: python
-    :emphasize-lines: 2,4
+    :emphasize-lines: 2,6
 
     from fastapi import Depends
     from fastapi_keycloak_middleware import CheckPermissions, MatchStrategy
 
-    @app.get("/view_user", dependencies=[Depends()])
+    @app.get(
+        "/view_user",
+        dependencies=[Depends(CheckPermissions(["user:view", "user:view_own"], match_strategy=MatchStrategy.OR))],
+    )
     def view_user():
         return {"userinfo": "Hello World"}
 
@@ -211,5 +219,10 @@ When used as a parameter, the result of the authorization evaluation is passed t
 
 You can now access the permissions that actually matched and act based on this information. For example, if only the :code:`user:view_own` permission matched, you could check if the user requested matches the currently logged in user.
 
-.. note::
-   Note that previous versions of this library used a decorator to match permissions and therefore needed quite convoluted logic to make the result accessible. Using the :code:`@require_permission` decorator and therefore the :code:`get_authorization_result` dependency is deprecated and will be removed in future versions.
+Starlette Compatibility
+^^^^^^^^^^^^^^^^^^^^^^^
+
+The scopes are stored as Starlette :code:`AuthCredentials` in the request, so :code:`request.auth.scopes`
+and Starlette's :code:`requires` decorator work as well. The :code:`CheckPermissions` dependency is
+recommended though, as it reports the matched scopes and only depends on :code:`get_auth`, which makes it
+easy to override in tests (see :doc:`testing`).

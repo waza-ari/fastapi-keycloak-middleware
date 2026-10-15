@@ -9,15 +9,19 @@ Request Modification Details
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If all checks outlined above pass successfully, the actual endpoint (or next middleware) will be called. To persist the authentication result,
-we're using Starlettes :code:`Request` object. The following attributes are added to the request:
+we're using the ASGI scope of the request, following the conventions of Starlette. The following keys are added:
 
 **User Object**
 
-The user object is stored in :code:`scope.user` attribute. As the request is passed to further middlewares, dependencies or potentially decorators, the endpoint can access the user information.
+The principal returned by the user or service mapper is stored in :code:`scope["user"]`, which is also available as :code:`request.user`.
 
 **Authorization Scopes**
 
-This example does not contain any scopes, so the :code:`scope.auth` attribute will be an empty list. Refer to the advanced documentation for how to leverate authorization scopes.
+The authorization scopes (after applying the scope mapper) are stored as Starlette :code:`AuthCredentials` in :code:`scope["auth"]`, which is also available as :code:`request.auth`. If authorization is disabled, the list of scopes is empty.
+
+**Authentication Context**
+
+An :code:`AuthContext` is stored in :code:`scope["auth_context"]`. It holds the principal type (user or service), all claims of the access token and the authorization scopes. Use the :code:`get_auth_context` dependency to retrieve it.
 
 Logging
 ^^^^^^^
@@ -101,6 +105,36 @@ possible to modify the decode options if needed.
 Please refer to the `JWCrypto` documentation for the available options:
 https://jwcrypto.readthedocs.io/en/latest/jwt.html#jwcrypto.jwt.JWT
 
+Validating Issuer and Audience
+------------------------------
+
+By default, the signature and the expiry of the token are validated. Tokens issued by the same
+realm for other clients are accepted as well. To only accept tokens issued for your API, validate
+the :code:`aud` (audience) claim, and optionally the :code:`iss` (issuer) claim:
+
+.. code-block:: python
+
+    keycloak_config = KeycloakConfiguration(
+        # ...
+        validation_options={
+            "check_claims": {
+                "iss": "https://sso.your-keycloak.com/realms/<Realm Name>",
+                "aud": "my-api",
+                "exp": None,
+            }
+        }
+    )
+
+.. warning::
+    As soon as :code:`check_claims` is set, `JWCrypto` only checks the claims listed there and
+    skips its default checks. Always include :code:`"exp": None`, otherwise expired tokens are
+    accepted. Every listed claim must be present in the token, so don't list claims your tokens
+    don't contain, such as :code:`nbf`, which Keycloak does not issue.
+
+Keycloak only adds your API to the :code:`aud` claim if the token was requested for it. Add an
+*Audience* mapper to the client scope of the clients calling your API, pointing to the client
+representing your API.
+
 Excluding Endpoints
 ^^^^^^^^^^^^^^^^^^^
 
@@ -170,73 +204,123 @@ Alternatively you can use multiple :code:`FastAPI` applications and mount them t
     app.mount(path="/secured", app=secured_app)
     app.mount(path="/public", app=public_app)
 
-Device Authentication
-^^^^^^^^^^^^^^^^^^^^^
+.. _service_principals:
 
-If you need to authenticate devices, you can do so in various different ways. We need to distinguish between two different scenarios:
+Service Principals
+^^^^^^^^^^^^^^^^^^
+
+Besides users, your API may be called by other software: IoT devices, background jobs or other backends.
+These usually authenticate using the OAuth 2.0 *client credentials* grant, which issues a token to the
+client itself, without any user being involved. This library calls them **service principals**.
 
 User Devices
 ------------
 
-These are devices that belong to a certain user. You can use Keycloak `device authorization grant <https://www.keycloak.org/docs/latest/securing_apps/#device-authorization-grant>`_. The device can start the process by using the Keycloak REST API and show a code to the user. The user then enters this code in Keycloak and authenticates with the user credentials. The device can poll another endpoint and receives a token when the authentication is completed.
+Devices that act on behalf of a user are not service principals. You can use the Keycloak
+`device authorization grant <https://www.keycloak.org/docs/latest/securing_apps/#device-authorization-grant>`_:
+the device shows a code to the user, who enters it in Keycloak and authenticates with the user credentials.
+The device then receives a token for that user. For this library there is no difference between those tokens
+and regular user tokens, so authentication and authorization work as previously described.
 
-You only need to make sure that the same claims are mapped to tokens created by this client compared to the claims normal users would get. For this library there is no difference between those tokens then, so authentication and authorization work as previously described.
+Detecting Service Tokens
+------------------------
 
-Standalone Devices
-------------------
-
-**Overview**
-
-It gets a little more complicated if a device is not directly mapped to a user, for example IoT decices you maintain that need to access your API.
-
-While the way how you obtain the token doesn't really matter (could be device code flow as described above or could be Keycloak offline tokens), the user that is used for this matters.
-
-**Keycloak configuration**
-
-One example on how to configure the Keycloak side of things:
-
-1. Create a user in Keycloak that represents the device
-2. Create a client for device authentication
-3. Create client roles for the devices you need to support and map them to the same claim you use for user roles on your user client
-4. Map the device user to client roles of the device client
-
-You can now obtain a refresh token on either using the device flow or my leveraging offline sessions and the device can use them to obtain an access token if it needs to perform requests against the API.
-
-.. note::
-    This by no means is the only way to do this. Keycloak is very flexible, you'll need to find the configuration that fits your needs.
-
-**Library configuration**
-
-Depending on your user handling within the API, you may need to take additional steps. If you also create the device users within your API environment and the user mapper can map them as normal, you don't need to take additonal steps. If you don't want to create these users within the API, this library has options to configure how to behave in case the user does not exist.
-
-The default behavior is to fail authentication if the built-in or user-defined user mapper cannot return a user. For device authentication, it is possible to add a specific claim to the access token which tells the library that this is a device requesting access.
-
-The following example shows the configurtion on the library side:
+Identity providers mark service tokens differently, so the library lets you decide which tokens belong to
+a service. Pass a :code:`service_detector` function, it receives all claims of the validated token and
+returns :code:`True` for service tokens:
 
 .. code-block:: python
-   :emphasize-lines: 7,8
 
-    # Set up Keycloak
-    keycloak_config = KeycloakConfiguration(
-        url="https://sso.your-keycloak.com",
-        realm="<Realm Name>",
-        client_id="<Client ID>",
-        client_secret="<Client Secret>",
-        enable_device_authentication=True,
-        device_authentication_claim="is_device",
+    setup_keycloak_middleware(
+        app,
+        keycloak_configuration=keycloak_config,
+        service_detector=lambda claims: bool(claims.get("is_device")),
     )
 
-This tells the library to enable the aforementioned behavior. It will now:
+If no detector is configured, every token is treated as a user token. Some common detectors:
 
-1. The access token signature and validity will be checked as usual
-2. Check if the claim :code:`is_device` is present in the access token
-3. If it is present, it will evaluate the value of the claim. If it is a truthy value (``bool(value) === True``), continue, otherwise fail authentication
-4. The remaining steps (claim extraction, user mapping, authorization scope mapping) will be skipped
+.. list-table::
+   :header-rows: 1
 
-If the claim is not present in the access token, the library will behave as usual and try normal user authentication.
+   * - Identity provider
+     - Detector
+   * - Explicit claim, e.g. a Keycloak *Hardcoded claim* mapper on the client
+     - :code:`lambda c: bool(c.get("is_device"))`
+   * - Keycloak service accounts
+     - :code:`lambda c: c.get("preferred_username", "").startswith("service-account-")`
+   * - RFC 9068 compliant providers
+     - :code:`lambda c: c.get("sub") == c.get("client_id")`
+   * - Auth0
+     - :code:`lambda c: c.get("gty") == "client-credentials"`
+   * - Microsoft Entra ID
+     - :code:`lambda c: c.get("idtyp") == "app"`
+
+.. warning::
+    Only rely on claims that cannot be influenced by users. For example, don't detect services based on a
+    user attribute that users can edit themselves.
+
+Mapping Service Tokens
+----------------------
+
+Service tokens are passed to the :code:`service_mapper` instead of the :code:`user_mapper`. It receives all
+claims of the token and returns an object representing the service. By default, a :code:`ServicePrincipal`
+is returned, identified by the :code:`client_id` claim, or the :code:`azp` or :code:`sub` claim if not present.
+
+Like the user mapper, returning :code:`None` or raising an exception rejects the request with a :code:`401`
+response. This allows you to deactivate a single service immediately:
+
+.. code-block:: python
+
+    async def map_service(claims: dict[str, typing.Any]) -> ServiceClient | None:
+        """
+        Look up the calling client in the database. Unknown or disabled clients are rejected.
+        """
+        return await ServiceClient.get_enabled(client_id=claims["azp"])
+
+    setup_keycloak_middleware(
+        app,
+        keycloak_configuration=keycloak_config,
+        user_mapper=map_user,
+        service_mapper=map_service,
+        service_detector=lambda claims: bool(claims.get("is_device")),
+    )
 
 .. note::
-    To add the claim to your token, you can either use a ``Hardcoded claim`` mapper or any other method you prefer.
+    Disabling the client in Keycloak only prevents new tokens from being issued, tokens already issued
+    remain valid until they expire. Rejecting the client in the service mapper closes this gap.
+
+Authorization scopes are extracted and mapped the same way as for users, so :code:`CheckPermissions`
+works for services as well. The required claims (see :code:`required_claims`) apply to service
+tokens too.
+
+Using Service Principals in Endpoints
+-------------------------------------
+
+Use the dependency matching what the endpoint needs:
+
+* :code:`get_user` for endpoints that need a user. Service tokens get a :code:`403` response.
+* :code:`get_service_principal` for endpoints that only services call. User tokens get a :code:`403` response.
+* :code:`get_principal` for endpoints that serve both. Use :code:`isinstance` on the returned object, or
+  :code:`get_auth_context` to check the principal type.
+
+Prefer returning a distinct type from the service mapper over making services look like users. Code that
+needs user specific data then can't receive a service by accident.
+
+Keycloak Configuration
+----------------------
+
+One example on how to configure Keycloak for service principals:
+
+1. Create one confidential client per service and enable *Service accounts roles* (client credentials grant).
+   Disable the other flows if the client is not used otherwise.
+2. Assign roles to the service account of the client. Map them to the same claim you use for user roles,
+   so the scope mapper can handle both.
+3. Optionally, add a *Hardcoded claim* mapper to the client, e.g. :code:`is_device` with value :code:`true`,
+   and use it in the :code:`service_detector`.
+4. Optionally, add an *Audience* mapper pointing to your API, and validate the audience as described in
+   `Validating Issuer and Audience`_.
+
+Rotating the client secret of one service does not affect the others.
 
 Websocket Support
 ^^^^^^^^^^^^^^^^^
@@ -246,64 +330,3 @@ Websocket support is enabled by default, but can be disabled by setting the :cod
 
 If enabled, the initial websocket connection request will be validated, subsequent messages within the same socket won't be affected.
 The cookie is expected to be named :code:`access_token` and contain the JWT token prefixed with :code:`Bearer`.
-
-Request Injection
-^^^^^^^^^^^^^^^^^
-
-.. warning::
-   This section documents details about deprecated, decorator based permission checking and will be removed in the future.
-
-.. note::
-   This section contains technical details about the implementation within the library and is not required to use the library. Feel free to skip it.
-
-The decorator used to enforce permissions requires to have access to the Request object, as the middleware stores the user information and compiled permissions there.
-
-FastAPI injects the request to the path function, if the path function declares the request parameter. If its not provided by the user, the request would normally not be passed and would therefore not be available to the decorator.
-
-This would end up in some code like this:
-
-.. code-block:: python
-
-    @app.get("/users/me")
-    @require_permission("user:read")
-    def read_users_me(request: Request): # pylint: disable=unused-argument
-        return {"user": "Hello World"}
-
-Not only would this require unneccessary imports and blow up the path function, it would also raise a warning for an unused variable which then would need to be suppressed.
-
-To avoid this, the decorater uses a somewhat "hacky" way to modify the function signature and include the request parameter. This way, the user does not need to declare the request parameter and the decorator can still access it.
-
-Lateron, before actually calling the path function, the request is removed from :code:`kwargs` again, to avoid an exception being raised for an unexpected argument.
-
-Details can be found in `PEP 362 - Function Signature Object <https://peps.python.org/pep-0362/#signature-object>`_. Consider the following code:
-
-.. code-block:: python
-
-    # Get function signature
-    sig = signature(func)
-
-    # Get parameters
-    parameters: OrderedDict = sig.parameters
-    if "request" in parameters.keys():
-        # Request is already present, no need to modify signature
-        return wrapper
-
-    # Add request parameter by creating a new parameter list based on the old one
-    parameters = [
-        Parameter(
-            name="request",
-            kind=Parameter.POSITIONAL_OR_KEYWORD,
-            default=Parameter.empty,
-            annotation=starlette.requests.Request,
-        ),
-        *parameters.values(),
-    ]
-
-    # Create a new signature, as the signature is immutable
-    new_sig = sig.replace(parameters=parameters, return_annotation=sig.return_annotation)
-    
-    # Update the wrapper function signature
-    wrapper.__signature__ = new_sig
-    return wrapper
-
-The request is still passed to the path function if defined by the user, otherwise its removed before calling the path function.

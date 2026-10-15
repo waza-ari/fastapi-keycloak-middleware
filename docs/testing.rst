@@ -22,6 +22,12 @@ When not using authorization, you can simply mock the authentication middleware 
 To still use users and/or authorization, you need a different way how to pass users to the FastAPI path functions.
 Assuming you use a custom user mapper in your application, you can override the dependency to return a user object from your database.
 
+.. note::
+    Without the middleware, requests are not authenticated, so the built-in :code:`get_user`,
+    :code:`get_service_principal`, :code:`get_principal` and :code:`get_auth_context` dependencies
+    respond with :code:`401`. Override each of them that your endpoints use. :code:`CheckPermissions`
+    only depends on :code:`get_auth`, so overriding :code:`get_auth` is sufficient for authorization.
+
 This scenario describes one option of using headers to pass the user information to the FastAPI path functions.
 Passing an `X-User` header would tell the overriden dependency which user to inject:
 
