@@ -3,9 +3,7 @@ API Documentation
 
 .. module:: fastapi_keycloak_middleware
 
-This part of the documentation covers all the interfaces of Requests. For
-parts where Requests depends on external libraries, we document the most
-important right here and provide links to the canonical documentation.
+This part of the documentation covers all public interfaces of the library.
 
 Middleware
 ----------
@@ -20,25 +18,32 @@ Support Classes
 .. _keycloak_configuration:
 .. autoclass:: KeycloakConfiguration
     :members:
+.. autoclass:: AuthContext
+    :members:
+.. autoclass:: PrincipalType
+    :members:
+.. autoclass:: FastApiUser
+    :members:
+.. autoclass:: ServicePrincipal
+    :members:
 .. autoclass:: AuthorizationResult
     :members:
 .. autoclass:: AuthorizationMethod
     :members:
 .. autoclass:: MatchStrategy
     :members:
+.. autoclass:: ExceptionResponse
+    :members:
 
-Decorators
-----------
-
-These decorators can be used to wrap certain paths in your FastAPI application.
-
-.. autofunction:: require_permission
-.. autofunction:: strip_request
-
-FastAPI Depdencies
-------------------
+FastAPI Dependencies
+--------------------
 
 These are the dependencies that you can use in your FastAPI application.
 
+.. autoclass:: CheckPermissions
+    :members: __init__
+.. autofunction:: get_principal
 .. autofunction:: get_user
-.. autofunction:: get_authorization_result
+.. autofunction:: get_service_principal
+.. autofunction:: get_auth
+.. autofunction:: get_auth_context
