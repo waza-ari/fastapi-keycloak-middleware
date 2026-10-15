@@ -30,7 +30,7 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
         The client secret is only needed if you use the introspection endpoint.
     :type client_secret: str, optional
     :param claims: List of claims that should be extracted from the access token.
-        Defaults to
+        Nested claims can be referenced with a dot separated path. Defaults to
         ``["sub", "name", "family_name", "given_name", "preferred_username", "email"]``.
     :type claims: list[str], optional
     :param reject_on_missing_claim: Whether to reject the request if a claim is missing.
@@ -41,7 +41,9 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
     :param authorization_method: Authorization method to use. Defaults to ``NONE``.
     :type authorization_method: AuthorizationMethod, optional
     :param authorization_claim: Claim to use for extracting authorization scopes.
-        Defaults to ``roles``.
+        Nested claims can be referenced with a dot separated path, e.g.
+        ``realm_access.roles``. Space delimited string values (like the OAuth 2.0
+        ``scope`` claim) are split into a list. Defaults to ``roles``.
     :type authorization_claim: str, optional
     :param use_introspection_endpoint: Whether to use the introspection endpoint
         for token validation. Should not be needed for Keycloak in general

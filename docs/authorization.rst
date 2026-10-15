@@ -96,10 +96,32 @@ By default, the :code:`roles` claim will be checked to build the scope. You can 
     setup_keycloak_middleware(
         app,
         keycloak_configuration=keycloak_config,
-        get_user=auth_get_user,
+        user_mapper=auth_get_user,
     )
 
 In this example, the library would extract the scopes from the :code:`permissions` claim.
+
+Nested claims can be referenced using a dot separated path. This allows using the roles Keycloak
+adds to the token by default, without configuring an additional protocol mapper:
+
+.. code-block:: python
+
+    keycloak_config = KeycloakConfiguration(
+        # ...
+        authorization_method=AuthorizationMethod.CLAIM,
+        # Realm roles
+        authorization_claim="realm_access.roles",
+        # or client roles of a specific client
+        # authorization_claim="resource_access.my-client.roles",
+    )
+
+If a claim with the exact name exists, it always takes precedence over walking the path. Claim
+names that contain dots themselves, such as namespaced claims (:code:`https://example.com/roles`),
+can therefore be used as well.
+
+If the claim contains a space delimited string instead of a list, it is split into a list. This
+is the format of the OAuth 2.0 :code:`scope` claim, and of the :code:`scp` claim used by Microsoft
+Entra ID. Setting :code:`authorization_claim="scope"` therefore yields one scope per entry.
 
 Permission Mapping
 ^^^^^^^^^^^^^^^^^^

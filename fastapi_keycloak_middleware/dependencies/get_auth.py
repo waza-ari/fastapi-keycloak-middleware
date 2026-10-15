@@ -14,10 +14,10 @@ async def get_auth(request: Request):
     if "auth" in request.scope:
         auth = request.scope["auth"]
 
-        # Check if auth is a single string, convert to list if so
+        # A string (e.g. returned by a scope mapper) is treated as space delimited list
         if isinstance(auth, str):
-            return [auth]
+            return auth.split()
 
-        return request.scope["auth"]
+        return auth
 
     return None

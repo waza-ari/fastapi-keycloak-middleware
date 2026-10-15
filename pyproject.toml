@@ -18,6 +18,7 @@ sphinx = [
 sphinx-rtd-theme = "^3"
 ruff = "^0"
 ruff-lsp = "^0"
+pytest = "^9.1.1"
 
 [build-system]
 requires = ["poetry-core"]
