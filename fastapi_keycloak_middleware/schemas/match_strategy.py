@@ -1,6 +1,6 @@
 """
 This module contains an Enum specifying the match strategy used
-by the require_permission decorator
+by the CheckPermissions dependency
 """
 
 from enum import Enum
@@ -9,7 +9,7 @@ from enum import Enum
 class MatchStrategy(Enum):
     """
     This Enum can be used to set the authorization match strategy
-    if multiple scopes are bassed to the ``require_permission`` decorator.
+    if multiple scopes are passed to the ``CheckPermissions`` dependency.
     Please use the Enum values instead of the values behind the Enums.
 
     Supported options are:
