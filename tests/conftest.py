@@ -25,12 +25,17 @@ def anyio_backend():
 
 
 class StubKeycloakOpenID:
-    """Stands in for KeycloakOpenID, the introspection endpoint returns fixed claims"""
+    """
+    Stands in for KeycloakOpenID, the introspection endpoint returns fixed claims
+    or raises the given exception
+    """
 
-    def __init__(self, token_info: dict[str, typing.Any]):
+    def __init__(self, token_info: dict[str, typing.Any] | Exception):
         self.token_info = token_info
 
     async def a_introspect(self, token: str) -> dict[str, typing.Any]:
+        if isinstance(self.token_info, Exception):
+            raise self.token_info
         return self.token_info
 
 
@@ -39,13 +44,16 @@ def stub_keycloak(monkeypatch):
     """
     Returns a function that makes every KeycloakBackend created afterwards
     validate tokens against the given claims, without contacting a Keycloak server.
+    Passing an exception makes the introspection endpoint raise it.
     """
 
-    def _stub(token_info: dict[str, typing.Any]):
+    def _stub(token_info: dict[str, typing.Any] | Exception):
+        if not isinstance(token_info, Exception):
+            token_info = {"active": True, **token_info}
         monkeypatch.setattr(
             KeycloakBackend,
             "_get_keycloak_openid",
-            lambda self: StubKeycloakOpenID({"active": True, **token_info}),
+            lambda self: StubKeycloakOpenID(token_info),
         )
 
     return _stub
