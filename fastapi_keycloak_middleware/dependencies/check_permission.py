@@ -6,21 +6,21 @@ has a certain permission before accessing a path
 import logging
 import typing
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, Request
 
 from ..schemas.authorization_methods import AuthorizationMethod
 from ..schemas.authorization_result import AuthorizationResult
 from ..schemas.match_strategy import MatchStrategy
 from .get_auth import get_auth
-from .get_user import get_user
 
 log = logging.getLogger(__name__)
 
 
 class CheckPermissions:
     """
-    This class can be used as FastAPI dependency to check if a user has
-    the required permissions to access a path
+    This class can be used as FastAPI dependency to check if a user or service has
+    the required permissions to access a path. It works the same way for both
+    principal types, it only evaluates the scopes returned by ``get_auth``.
     """
 
     def __init__(
@@ -33,9 +33,10 @@ class CheckPermissions:
         or a list of strings. The match strategy can be either AND or OR, meaning
         that all permissions must be present or at least one permission must be present.
 
-        :param required_permission: _description_
+        :param required_permission: The permission or list of permissions to check for
         :type required_permission: typing.Union[str, typing.List[str]]
-        :param match_strategy: _description_, defaults to MatchStrategy.AND
+        :param match_strategy: Whether all (AND) or at least one (OR) of the permissions
+            must be present, defaults to MatchStrategy.AND
         :type match_strategy: MatchStrategy, optional
         """
 
@@ -51,7 +52,10 @@ class CheckPermissions:
 
         self.match_strategy = match_strategy
 
-    def __call__(self, user=Depends(get_user), auth: typing.List[str] = Depends(get_auth)):
+    def __call__(self, request: Request, auth: typing.List[str] = Depends(get_auth)):
+        # Only used for logging. The principal is read from the scope directly, so that
+        # overriding get_auth (e.g. in tests) is enough to use this dependency.
+        user = request.scope.get("user")
         log.debug(f"Checking permission {self.required_permission} for user {str(user)}")
 
         # Get matching permissions
