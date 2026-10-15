@@ -38,14 +38,8 @@ This is a minimal example of using the middleware and will already perform the f
 
 * Parse the :code:`Authorization` header for a :code:`Bearer` token (the token scheme can be configured, see below). Return :code:`401` if no token is found.
 * Validate the token using the public key of the realm obtained from Keycloak. Return :code:`401` if the token is invalid or expired.
-* Extract user information from the token. The claims to use are configurable, by default the following claims are read:
-   * :code:`sub` - part of the :code:`openid` scope, defining a mandatory, unique, immutable string identifier for the user
-   * :code:`name` - part of the :code:`profile` scope, defining a human-readable name for the user
-   * :code:`family_name` - part of the :code:`profile` scope, defining the user's family name
-   * :code:`given_name` - part of the :code:`profile` scope, defining the user's given name
-   * :code:`preferred_username` - part of the :code:`profile` scope, defining the user's preferred username. Note that as per openid specifications, you must not rely on this claim to be unique for all users
-   * :code:`email` - part of the :code:`email` scope, defining the user's email address
-* Get the user object based on the extracted information. As no custom callback function is provided, it will return an instance of :code:`FastApiUser` containing extracted information.
+* Make sure the required claims are present in the token. By default, only the :code:`sub` claim is required, which is a mandatory, unique and immutable identifier of the user. Return :code:`401` if a required claim is missing.
+* Get the user object based on the token claims. As no custom callback function is provided, it will return an instance of :code:`FastApiUser` built from the :code:`sub`, :code:`given_name` and :code:`family_name` claims.
 * Add proper 401 and 403 responses to the OpenAPI schema
 
 .. note::
@@ -175,27 +169,29 @@ In many cases, you'll have your own user model you want to work with and therefo
         user_mapper=map_user,
     )
 
-The :code:`userinfo` parameter is a dictionary containing the claims extracted from the access token. You can rely on all the claims to be populated, as tokens without these claims are rejected in a previous step by default. This behavior can be changed by setting the :code:`reject_on_missing_claim` parameter of the :code:`KeycloakConfiguration` class to :code:`False`, then you need to handle potentially missing claims yourself.
+The :code:`userinfo` parameter is a dictionary containing all claims of the validated access token. Only the claims listed in :code:`required_claims` (see below) are guaranteed to be present, use :code:`userinfo.get()` for all other claims.
 
-This is an example of what you can expect using the default configuration:
+This is an example of what you can expect for a Keycloak access token (shortened):
 
 .. code-block:: json
 
    {
        "sub": "1234567890",
+       "azp": "my-frontend",
        "name": "John Doe",
        "family_name": "Doe",
        "given_name": "John",
        "preferred_username": "jdoe",
-       "email": "jon.doe@example.com"
+       "email": "jon.doe@example.com",
+       "realm_access": {"roles": ["offline_access", "uma_authorization"]}
     }
 
 .. note::
    Depending on your application architecture, you can of course also use this method to create the user, if users are allowed to **register** (not just authenticate) to your application via Keycloak.
 
-**Rejecting on missing claims**
+**Rejecting a user**
 
-If you opt to allow missing claims, you can still reject the user authentication within your :code:`get_user` class by simply returning :code:`None`.
+Returning :code:`None` (or raising an exception) from the user mapper rejects the request with a :code:`401` response. This can be used to block users that exist in Keycloak but should not have access to your application.
 
 **Database / ORM mappings**
 
@@ -204,7 +200,7 @@ Be careful when working with ORM tools like SQLAlchemy. Assume you're adding an 
 Getting the User in FastAPI Endpoints
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This package provides a very simple dependency to retrieve the user object from the request. This is useful for simple cases, but for more advanced cases you may want to provide your own dependency.
+This package provides simple dependencies to retrieve the authenticated principal from the request. This is useful for simple cases, but for more advanced cases you may want to provide your own dependency.
 
 **Simple Example**
 
@@ -216,7 +212,13 @@ This package provides a very simple dependency to retrieve the user object from 
     async def root(user: User = Depends(get_user)):
         return {"message": "Hello World"}
 
-This will return whatever was stored in the request either by the built-in function or your custom function to retrieve the user object.
+This will return whatever was returned by the built-in or your custom user mapper. The following dependencies are available:
+
+* :code:`get_user` returns the user object. Returns a :code:`401` response if the request is not authenticated (e.g. on an excluded path) and a :code:`403` response if the token was issued to a service (see :ref:`service_principals`).
+* :code:`get_service_principal` returns the service object, the counterpart of :code:`get_user` for service tokens.
+* :code:`get_principal` returns either of them, for endpoints that serve both users and services.
+* :code:`get_auth_context` returns an :code:`AuthContext` holding the principal type, all claims of the token and the authorization scopes.
+* :code:`get_auth` returns the authorization scopes, see :doc:`authorization`.
 
 **Advanced Example**
 
@@ -250,10 +252,10 @@ This will give you a user object that is still bound to the database session, so
 .. note::
     :code:`get_db` is assumed to be an existing dependency to retrieve a Session to your database.
 
-Modify Extracted Claims
-^^^^^^^^^^^^^^^^^^^^^^^
+Required Claims
+^^^^^^^^^^^^^^^
 
-You can also configure the class to extract other / additional claims from the token and pass it to the :code:`user_mapper` function:
+Tokens that are missing one of the required claims are rejected with a :code:`401` response before any mapper is called. By default only :code:`sub` is required. Nested claims can be referenced with a dot separated path:
 
 .. code-block:: python
    :emphasize-lines: 7
@@ -264,9 +266,10 @@ You can also configure the class to extract other / additional claims from the t
         realm="<Realm Name>",
         client_id="<Client ID>",
         client_secret="<Client Secret>",
-        claims=["sub", "name", "email", "your-claim"], # Modify claims
-        reject_on_missing_claim=False, # Control behaviour when claims are missing
+        required_claims=["sub", "email", "realm_access.roles"],
     )
+
+The required claims apply to all tokens, including service tokens. Keep this in mind when requiring claims that only exist in user tokens, such as :code:`email`.
 
 Swagger UI Integration
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -324,8 +327,7 @@ attribute, which must be the True or False bool or the str path to the CA bundle
         realm="<Realm Name>",
         client_id="<Client ID>",
         client_secret="<Client Secret>",
-        claims=["sub", "name", "email", "your-claim"], # Modify claims
-        reject_on_missing_claim=False, # Control behaviour when claims are missing
+        required_claims=["sub", "email"], # Reject tokens missing one of these claims
         verify="<Path to CA File>/ca.pem" # Can be True, False or the path to the CA file used to sign certs
     )
 

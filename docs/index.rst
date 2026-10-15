@@ -9,8 +9,8 @@ FastAPI KeyCloak Middleware
 This package provides a middleware for `FastAPI <http://fastapi.tiangolo.com>`_  that simplifies
 integrating with `Keycloak <http://http://keycloak.org>`_ for  
 authentication and authorization. It supports OIDC and supports validating access tokens,
-reading roles and basic authentication. In addition it provides several decorators and 
-dependencies to easily integrate into your FastAPI application.
+reading roles and basic authentication. In addition it provides several dependencies to
+easily integrate into your FastAPI application.
 
 It relies on the `python-keycloak <http://python-keycloak.readthedocs.io>`_ package, which
 is the only dependency outside of the FastAPI ecosystem which would be installed anyway. 
@@ -29,6 +29,7 @@ services.
    authorization
    advanced_topics
    testing
+   migration_v2
    api
 
 
