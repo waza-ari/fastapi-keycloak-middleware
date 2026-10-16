@@ -21,7 +21,11 @@ class KeycloakConfiguration(BaseModel):  # pylint: disable=too-few-public-method
     :param url: URL of the Keycloak server. If you use legacy Keycloak versions
         or still have the auth context, you need to add the auth context to the URL.
     :type url: str
-    :param client_id: Client ID of the client used to validate the token.
+    :param client_id: Client ID used to call the introspection endpoint. It is also the
+        client ID for Swagger UI authentication if ``swagger_client_id`` is not set. Local
+        token validation does not use it, and the ``aud`` claim is not checked against it.
+        To only accept tokens issued for your API, add an audience check to
+        ``validation_options``.
     :type client_id: str
     :param swagger_client_id: Client ID for swagger UI authentication. Defaults to None.
     :type swagger_client_id: str, optional
